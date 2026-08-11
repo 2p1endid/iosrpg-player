@@ -8,8 +8,8 @@ on:
       - master
     paths:
       - "App/**"
-      - "Shared/**"
-      - "Tests/**"
+      - "shared/**"
+      - "tests/**"
       - "Resources/**"
       - "project.yml"
       - "scripts/build-ios.sh"
@@ -17,8 +17,8 @@ on:
   pull_request:
     paths:
       - "App/**"
-      - "Shared/**"
-      - "Tests/**"
+      - "shared/**"
+      - "tests/**"
       - "Resources/**"
       - "project.yml"
       - "scripts/build-ios.sh"
@@ -94,6 +94,15 @@ jobs:
             -destination "platform=iOS Simulator,id=$DEVICE_ID" \
             -derivedDataPath build/TestDerivedData \
             test | tee build/simulator-test.log
+
+      - name: Inspect tested app bundle metadata
+        if: always()
+        run: |
+          APP_PATH="build/TestDerivedData/Build/Products/Debug-iphonesimulator/IOSRPGPlayer.app"
+          if [[ -f "$APP_PATH/Info.plist" ]]; then
+            /usr/libexec/PlistBuddy -c 'Print' "$APP_PATH/Info.plist" | tee build/test-info-plist.log
+            /usr/bin/codesign --verify --deep --strict --verbose=4 "$APP_PATH" 2>&1 | tee build/test-codesign.log || true
+          fi
 
       - name: Build unsigned iOS device archive
         run: |

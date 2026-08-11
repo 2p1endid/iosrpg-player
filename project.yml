@@ -15,7 +15,7 @@ targets:
     sources:
       - path: App
       - path: shared/GameFileRules.swift
-      - path: Resources
+      - path: Resources/TestGame
         type: folder
         buildPhase: resources
     settings:
