@@ -13,3 +13,4 @@ node_modules/
 Thumbs.db
 IOSRPGPlayer-source-spike.zip
 ci-artifacts/
+*.ipa

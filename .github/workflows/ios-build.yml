@@ -116,11 +116,18 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             archive | tee build/device-archive.log
 
-      - name: Package unsigned app bundle
+      - name: Package unsigned IPA
         run: |
-          ditto -c -k --sequesterRsrc --keepParent \
+          rm -rf build/Payload
+          mkdir -p build/Payload
+          cp -R \
             build/IOSRPGPlayer.xcarchive/Products/Applications/IOSRPGPlayer.app \
-            build/IOSRPGPlayer-unsigned-app.zip
+            build/Payload/
+          (
+            cd build
+            ditto -c -k --sequesterRsrc --keepParent Payload IOSRPGPlayer-unsigned.ipa
+          )
+          unzip -t build/IOSRPGPlayer-unsigned.ipa
 
       - name: Upload build evidence
         if: always()
@@ -131,5 +138,5 @@ jobs:
           retention-days: 14
           path: |
             build/*.log
-            build/IOSRPGPlayer-unsigned-app.zip
+            build/IOSRPGPlayer-unsigned.ipa
             build/IOSRPGPlayer.xcarchive/Info.plist

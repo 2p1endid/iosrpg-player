@@ -61,6 +61,14 @@ xcrun simctl list devices available
 build/IOSRPGPlayer.xcarchive
 ```
 
+GitHub Actions 还会把该归档中的设备 App 按标准 `Payload/IOSRPGPlayer.app` 结构封装为：
+
+```text
+IOSRPGPlayer-unsigned.ipa
+```
+
+该文件扩展名和目录结构是 IPA，但由于没有 Apple 证书和 provisioning profile，它仍然不能直接安装到普通 iPhone。它用于验证设备架构构建，或者交给合法的个人开发签名/CI 签名流程继续签名。
+
 ## 导出已签名 IPA
 
 首先复制配置模板：
