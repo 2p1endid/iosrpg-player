@@ -69,6 +69,17 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build | tee build/simulator-build.log
 
+      - name: Inspect simulator app bundle metadata
+        run: |
+          APP_PATH="build/DerivedData/Build/Products/Debug-iphonesimulator/IOSRPGPlayer.app"
+          test -f "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print' "$APP_PATH/Info.plist" | tee build/simulator-info-plist.log
+          BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist" 2>/dev/null || true)"
+          if [[ -z "$BUNDLE_ID" ]]; then
+            echo 'error: generated simulator app has no CFBundleIdentifier' >&2
+            exit 1
+          fi
+
       - name: Run iOS unit tests
         run: |
           set -o pipefail
