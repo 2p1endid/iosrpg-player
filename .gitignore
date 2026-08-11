@@ -1,0 +1,14 @@
+# Xcode / Swift
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+ExportOptions.plist
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+IOSRPGPlayer-source-spike.zip

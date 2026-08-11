@@ -1,0 +1,114 @@
+name: iOS macOS Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "App/**"
+      - "Shared/**"
+      - "Tests/**"
+      - "Resources/**"
+      - "project.yml"
+      - "scripts/build-ios.sh"
+      - ".github/workflows/ios-build.yml"
+  pull_request:
+    paths:
+      - "App/**"
+      - "Shared/**"
+      - "Tests/**"
+      - "Resources/**"
+      - "project.yml"
+      - "scripts/build-ios.sh"
+      - ".github/workflows/ios-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test on macOS
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Show Apple toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: |
+          xcodegen generate
+          test -d IOSRPGPlayer.xcodeproj
+
+      - name: Run Node core tests
+        run: npm test
+
+      - name: Build iOS Simulator app
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project IOSRPGPlayer.xcodeproj \
+            -scheme IOSRPGPlayer \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tee build/simulator-build.log
+
+      - name: Run iOS unit tests
+        run: |
+          set -o pipefail
+          DEVICE_ID="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for runtime, devices in d.items() if "iOS" in runtime for x in devices if x.get("isAvailable") and x["name"].startswith("iPhone")))')"
+          echo "Using simulator $DEVICE_ID"
+          xcodebuild \
+            -project IOSRPGPlayer.xcodeproj \
+            -scheme IOSRPGPlayer \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            test | tee build/simulator-test.log
+
+      - name: Build unsigned iOS device archive
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project IOSRPGPlayer.xcodeproj \
+            -scheme IOSRPGPlayer \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/IOSRPGPlayer.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            archive | tee build/device-archive.log
+
+      - name: Package unsigned app bundle
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/IOSRPGPlayer.xcarchive/Products/Applications/IOSRPGPlayer.app \
+            build/IOSRPGPlayer-unsigned-app.zip
+
+      - name: Upload build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-evidence-${{ github.run_number }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            build/*.log
+            build/IOSRPGPlayer-unsigned-app.zip
+            build/IOSRPGPlayer.xcarchive/Info.plist

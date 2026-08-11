@@ -1,0 +1,3 @@
+(() => {
+  window.RPGMZRuntime.managerReady = true;
+})();
