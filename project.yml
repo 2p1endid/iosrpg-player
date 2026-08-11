@@ -22,18 +22,10 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.iosrpgplayer
         PRODUCT_NAME: IOSRPGPlayer
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
-        INFOPLIST_KEY_CFBundleExecutable: "$(EXECUTABLE_NAME)"
-        INFOPLIST_KEY_CFBundleName: "$(PRODUCT_NAME)"
-        INFOPLIST_KEY_CFBundlePackageType: APPL
-        INFOPLIST_KEY_CFBundleShortVersionString: "0.1.0"
-        INFOPLIST_KEY_CFBundleVersion: "1"
-        INFOPLIST_KEY_CFBundleDisplayName: iOS RPG Player
-        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: App/Info.plist
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
     scheme:
       testTargets:
