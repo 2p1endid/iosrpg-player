@@ -51,6 +51,7 @@ jobs:
         run: |
           xcodegen generate
           test -d IOSRPGPlayer.xcodeproj
+          mkdir -p build
 
       - name: Run Node core tests
         run: npm test
