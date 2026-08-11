@@ -14,7 +14,7 @@ targets:
     platform: iOS
     sources:
       - path: App
-      - path: shared
+      - path: shared/GameFileRules.swift
       - path: Resources
         type: folder
         buildPhase: resources
@@ -34,7 +34,7 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - path: tests
+      - path: tests/GameFileRulesTests.swift
     dependencies:
       - target: IOSRPGPlayer
     settings:
