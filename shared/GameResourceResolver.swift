@@ -10,8 +10,9 @@ struct ResolvedGameResource {
 enum GameResourceResolver {
     static func resolve(requestURL: URL, gameRoot: URL) throws -> ResolvedGameResource {
         let decodedPath = requestURL.path.removingPercentEncoding ?? requestURL.path
+        let requestedPath = decodedPath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         let relativePath = try GameFileRules.safeRelativePath(
-            decodedPath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            requestedPath.isEmpty ? "index.html" : requestedPath
         )
         let standardizedRoot = gameRoot.standardizedFileURL
         let resourceURL = try resolveCaseInsensitive(relativePath: relativePath, root: standardizedRoot)
