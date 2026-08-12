@@ -1,16 +1,13 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-private enum GameImportSource: String, Identifiable {
-    case zip
-    case folder
-    var id: String { rawValue }
+private extension GameImportSource {
     var allowedTypes: [UTType] { self == .zip ? [.zip] : [.folder] }
 }
 
 struct ContentView: View {
     @StateObject private var library = GameLibraryStore()
-    @State private var importSource: GameImportSource?
+    @State private var importPicker = GameImportPickerState()
     @State private var navigationPath: [ImportedGame] = []
     @State private var importError: String?
 
@@ -28,10 +25,10 @@ struct ContentView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button { importSource = .zip } label: {
+                        Button { importPicker.present(.zip) } label: {
                             Label("导入 ZIP", systemImage: "doc.zipper")
                         }
-                        Button { importSource = .folder } label: {
+                        Button { importPicker.present(.folder) } label: {
                             Label("导入文件夹", systemImage: "folder.badge.plus")
                         }
                     } label: {
@@ -46,14 +43,13 @@ struct ContentView: View {
         }
         .fileImporter(
             isPresented: Binding(
-                get: { importSource != nil },
-                set: { if !$0 { importSource = nil } }
+                get: { importPicker.isPresented },
+                set: { importPicker.presentationChanged(isPresented: $0) }
             ),
-            allowedContentTypes: importSource?.allowedTypes ?? [.data],
+            allowedContentTypes: importPicker.source?.allowedTypes ?? [.data],
             allowsMultipleSelection: false
         ) { result in
-            let source = importSource
-            importSource = nil
+            let source = importPicker.consumeSource()
             guard case let .success(urls) = result, let url = urls.first, let source else {
                 if case let .failure(error) = result { importError = error.localizedDescription }
                 return
@@ -86,9 +82,9 @@ struct ContentView: View {
         } description: {
             Text("导入 RPG Maker MV/MZ ZIP，或选择已经解压的项目文件夹。")
         } actions: {
-            Button("导入 ZIP") { importSource = .zip }
+            Button("导入 ZIP") { importPicker.present(.zip) }
                 .buttonStyle(.borderedProminent)
-            Button("导入文件夹") { importSource = .folder }
+            Button("导入文件夹") { importPicker.present(.folder) }
             NavigationLink("打开内置测试环境") { GamePlayerScreen(game: nil) }
         }
     }

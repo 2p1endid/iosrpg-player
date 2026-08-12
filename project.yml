@@ -20,6 +20,7 @@ targets:
       - path: shared/SafeZIPExtractor.swift
       - path: shared/GameResourceResolver.swift
       - path: shared/ProgressFileCopier.swift
+      - path: shared/GameImportPickerState.swift
       - path: Resources/TestGame
         type: folder
         buildPhase: resources
