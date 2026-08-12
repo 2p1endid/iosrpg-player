@@ -18,6 +18,7 @@ targets:
       - path: shared/GameProjectInspector.swift
       - path: shared/GameLibraryStore.swift
       - path: shared/SafeZIPExtractor.swift
+      - path: shared/GameResourceResolver.swift
       - path: Resources/TestGame
         type: folder
         buildPhase: resources

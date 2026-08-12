@@ -13,28 +13,21 @@ final class GameResourceSchemeHandler: NSObject, WKURLSchemeHandler {
             guard let gameRoot, let requestURL = urlSchemeTask.request.url else {
                 throw GameFileError.missingResource
             }
-
-            let requestPath = requestURL.path.removingPercentEncoding ?? requestURL.path
-            let relativePath = try GameFileRules.safeRelativePath(requestPath.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
-            let resourceURL = gameRoot.appendingPathComponent(relativePath).standardizedFileURL
-
-            let rootPrefix = gameRoot.path.hasSuffix("/") ? gameRoot.path : gameRoot.path + "/"
-            guard resourceURL.path.hasPrefix(rootPrefix) || resourceURL == gameRoot else {
-                throw GameFileError.pathTraversal
-            }
-            guard FileManager.default.fileExists(atPath: resourceURL.path) else {
+            let resource = try GameResourceResolver.resolve(requestURL: requestURL, gameRoot: gameRoot)
+            guard let response = HTTPURLResponse(
+                url: requestURL,
+                statusCode: resource.statusCode,
+                httpVersion: "HTTP/1.1",
+                headerFields: [
+                    "Content-Type": resource.textEncodingName.map { "\(resource.mimeType); charset=\($0)" } ?? resource.mimeType,
+                    "Content-Length": String(resource.data.count),
+                    "Cache-Control": "no-cache"
+                ]
+            ) else {
                 throw GameFileError.missingResource
             }
-
-            let data = try Data(contentsOf: resourceURL, options: [.mappedIfSafe])
-            let response = URLResponse(
-                url: requestURL,
-                mimeType: GameFileRules.mimeType(for: resourceURL.path).components(separatedBy: ";").first,
-                expectedContentLength: data.count,
-                textEncodingName: GameFileRules.mimeType(for: resourceURL.path).contains("charset=utf-8") ? "utf-8" : nil
-            )
             urlSchemeTask.didReceive(response)
-            urlSchemeTask.didReceive(data)
+            urlSchemeTask.didReceive(resource.data)
             urlSchemeTask.didFinish()
         } catch {
             urlSchemeTask.didFailWithError(error)
