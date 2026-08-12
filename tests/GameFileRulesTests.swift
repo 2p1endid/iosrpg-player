@@ -44,6 +44,35 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(GameFileRules.mimeType(for: "unknown.bin"), "application/octet-stream")
     }
 
+    func testResourceResolverReturnsHTTPStyleSuccessResponse() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("index.html")
+
+        let resource = try GameResourceResolver.resolve(
+            requestURL: URL(string: "rpg-game://fixture/index.html")!,
+            gameRoot: fixture.root
+        )
+
+        XCTAssertEqual(resource.statusCode, 200)
+        XCTAssertEqual(resource.mimeType, "text/html")
+        XCTAssertEqual(resource.textEncodingName, "utf-8")
+    }
+
+    func testResourceResolverHandlesQueryStringsAndPercentEncodedNames() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("data/系统.json")
+
+        let resource = try GameResourceResolver.resolve(
+            requestURL: URL(string: "rpg-game://fixture/data/%E7%B3%BB%E7%BB%9F.json?v=1")!,
+            gameRoot: fixture.root
+        )
+
+        XCTAssertEqual(resource.statusCode, 200)
+        XCTAssertEqual(resource.mimeType, "application/json")
+    }
+
     func testFindsNestedMZGameRoot() throws {
         let fixture = try TemporaryGameFixture()
         defer { fixture.remove() }
