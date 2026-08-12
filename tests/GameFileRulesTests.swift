@@ -193,7 +193,7 @@ final class GameFileRulesTests: XCTestCase {
             progress: { progressValues.append($0) }
         )
 
-        XCTAssertEqual(progressValues.last, 1, accuracy: 0.0001)
+        XCTAssertEqual(progressValues.last ?? 0, 1, accuracy: 0.0001)
         XCTAssertEqual(progressValues, progressValues.sorted())
         XCTAssertTrue(FileManager.default.fileExists(atPath: destination.appendingPathComponent("nested/b.txt").path))
     }
@@ -213,7 +213,7 @@ final class GameFileRulesTests: XCTestCase {
             progress: { progressValues.append($0) }
         )
 
-        XCTAssertEqual(progressValues.last, 1, accuracy: 0.0001)
+        XCTAssertEqual(progressValues.last ?? 0, 1, accuracy: 0.0001)
         XCTAssertEqual(progressValues, progressValues.sorted())
     }
 }
