@@ -85,7 +85,16 @@ final class GameFileRulesTests: XCTestCase {
 
         XCTAssertEqual(game.engine, .mv)
         XCTAssertTrue(FileManager.default.fileExists(atPath: game.gameRootURL.path))
-        XCTAssertEqual(reloaded.games, [game])
+        XCTAssertEqual(reloaded.games.count, 1)
+        XCTAssertEqual(reloaded.games.first?.id, game.id)
+        XCTAssertEqual(reloaded.games.first?.name, game.name)
+        XCTAssertEqual(reloaded.games.first?.engine, game.engine)
+        XCTAssertEqual(reloaded.games.first?.relativeGameRoot, game.relativeGameRoot)
+        XCTAssertEqual(
+            reloaded.games.first?.importedAt.timeIntervalSince1970 ?? 0,
+            game.importedAt.timeIntervalSince1970,
+            accuracy: 0.001
+        )
     }
 
     func testLibraryDeletesImportedGameFiles() async throws {
