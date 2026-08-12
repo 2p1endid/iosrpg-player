@@ -1,86 +1,75 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+private enum GameImportSource: String, Identifiable {
+    case zip
+    case folder
+    var id: String { rawValue }
+    var allowedTypes: [UTType] { self == .zip ? [.zip] : [.folder] }
+}
+
 struct ContentView: View {
     @StateObject private var library = GameLibraryStore()
-    @State private var isImportingFolder = false
-    @State private var isImportingZIP = false
-    @State private var selectedGame: ImportedGame?
+    @State private var importSource: GameImportSource?
+    @State private var navigationPath: [ImportedGame] = []
     @State private var importError: String?
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             Group {
-                if library.games.isEmpty {
-                    emptyState
-                } else {
-                    gameList
-                }
+                if library.games.isEmpty { emptyState } else { gameList }
             }
             .navigationTitle("我的游戏")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink {
-                        GamePlayerScreen(game: nil)
-                    } label: {
+                    NavigationLink { GamePlayerScreen(game: nil) } label: {
                         Label("测试环境", systemImage: "testtube.2")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button {
-                            isImportingZIP = true
-                        } label: {
+                        Button { importSource = .zip } label: {
                             Label("导入 ZIP", systemImage: "doc.zipper")
                         }
-                        Button {
-                            isImportingFolder = true
-                        } label: {
+                        Button { importSource = .folder } label: {
                             Label("导入文件夹", systemImage: "folder.badge.plus")
                         }
                     } label: {
                         Label("导入游戏", systemImage: "plus")
                     }
+                    .disabled(library.importProgress != nil)
                 }
+            }
+            .navigationDestination(for: ImportedGame.self) { game in
+                GamePlayerScreen(game: game)
             }
         }
         .fileImporter(
-            isPresented: $isImportingFolder,
-            allowedContentTypes: [.folder],
+            isPresented: Binding(
+                get: { importSource != nil },
+                set: { if !$0 { importSource = nil } }
+            ),
+            allowedContentTypes: importSource?.allowedTypes ?? [.data],
             allowsMultipleSelection: false
         ) { result in
-            guard case let .success(urls) = result, let folder = urls.first else {
+            let source = importSource
+            importSource = nil
+            guard case let .success(urls) = result, let url = urls.first, let source else {
                 if case let .failure(error) = result { importError = error.localizedDescription }
                 return
             }
             Task {
                 do {
-                    selectedGame = try await library.importFolder(folder)
+                    let game = source == .zip
+                        ? try await library.importZIP(url)
+                        : try await library.importFolder(url)
+                    navigationPath.append(game)
                 } catch {
                     importError = error.localizedDescription
                 }
             }
         }
-        .fileImporter(
-            isPresented: $isImportingZIP,
-            allowedContentTypes: [.zip],
-            allowsMultipleSelection: false
-        ) { result in
-            guard case let .success(urls) = result, let archive = urls.first else {
-                if case let .failure(error) = result { importError = error.localizedDescription }
-                return
-            }
-            Task {
-                do {
-                    selectedGame = try await library.importZIP(archive)
-                } catch {
-                    importError = error.localizedDescription
-                }
-            }
-        }
-        .navigationDestination(item: $selectedGame) { game in
-            GamePlayerScreen(game: game)
-        }
+        .overlay { if let progress = library.importProgress { ImportProgressOverlay(progress: progress) } }
         .alert("导入失败", isPresented: Binding(
             get: { importError != nil },
             set: { if !$0 { importError = nil } }
@@ -97,63 +86,69 @@ struct ContentView: View {
         } description: {
             Text("导入 RPG Maker MV/MZ ZIP，或选择已经解压的项目文件夹。")
         } actions: {
-            Button("导入 ZIP") { isImportingZIP = true }
+            Button("导入 ZIP") { importSource = .zip }
                 .buttonStyle(.borderedProminent)
-            Button("导入文件夹") { isImportingFolder = true }
-            NavigationLink("打开内置测试环境") {
-                GamePlayerScreen(game: nil)
-            }
+            Button("导入文件夹") { importSource = .folder }
+            NavigationLink("打开内置测试环境") { GamePlayerScreen(game: nil) }
         }
     }
 
     private var gameList: some View {
         List {
             if let message = library.operationMessage {
-                Text(message)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text(message).font(.caption).foregroundStyle(.secondary)
             }
             ForEach(library.games) { game in
-                Button {
-                    selectedGame = game
-                } label: {
+                NavigationLink(value: game) {
                     HStack(spacing: 14) {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(.blue.gradient)
+                            RoundedRectangle(cornerRadius: 12).fill(.blue.gradient)
                             Image(systemName: "gamecontroller.fill")
-                                .foregroundStyle(.white)
-                                .font(.title2)
+                                .foregroundStyle(.white).font(.title2)
                         }
                         .frame(width: 52, height: 52)
-
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(game.name)
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                            Text("RPG Maker \(game.engineLabel)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(game.importedAt, style: .date)
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
+                            Text(game.name).font(.headline).foregroundStyle(.primary)
+                            Text("RPG Maker \(game.engineLabel)").font(.caption).foregroundStyle(.secondary)
+                            Text(game.importedAt, style: .date).font(.caption2).foregroundStyle(.tertiary)
                         }
-                        Spacer()
-                        Image(systemName: "play.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.blue)
                     }
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
                         do { try library.delete(game) }
                         catch { importError = error.localizedDescription }
-                    } label: {
-                        Label("删除", systemImage: "trash")
-                    }
+                    } label: { Label("删除", systemImage: "trash") }
                 }
             }
         }
+    }
+}
+
+private struct ImportProgressOverlay: View {
+    let progress: GameImportProgress
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.48).ignoresSafeArea()
+            VStack(spacing: 16) {
+                ProgressView(value: progress.fraction, total: 1)
+                    .progressViewStyle(.linear)
+                    .tint(.blue)
+                HStack {
+                    Text(progress.phase.rawValue).font(.headline)
+                    Spacer()
+                    Text("\(progress.percentage)%").monospacedDigit().font(.headline)
+                }
+                Text("请保持 App 在前台，导入完成后会自动打开游戏。")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            .padding(24)
+            .frame(maxWidth: 380)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
+            .padding()
+        }
+        .allowsHitTesting(true)
     }
 }
 
@@ -161,9 +156,7 @@ struct GamePlayerScreen: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model: PlayerModel
 
-    init(game: ImportedGame?) {
-        _model = StateObject(wrappedValue: PlayerModel(game: game))
-    }
+    init(game: ImportedGame?) { _model = StateObject(wrappedValue: PlayerModel(game: game)) }
 
     var body: some View {
         ZStack {
@@ -184,32 +177,17 @@ struct GamePlayerScreen: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Button { dismiss() } label: {
-                    Label("游戏库", systemImage: "chevron.left")
-                }
-                Text(model.gameName)
-                    .font(.headline)
-                    .lineLimit(1)
+                Button { dismiss() } label: { Label("游戏库", systemImage: "chevron.left") }
+                Text(model.gameName).font(.headline).lineLimit(1)
                 Spacer()
-                Button("重新加载") { model.loadGame() }
-                    .buttonStyle(.bordered)
+                Button("重新加载") { model.loadGame() }.buttonStyle(.bordered)
             }
-            Text(model.status)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text(model.status).font(.caption).foregroundStyle(.secondary)
             Text("JS: \(model.lastGameMessage)")
-                .font(.caption2.monospaced())
-                .foregroundStyle(.mint)
-                .lineLimit(1)
-            if let error = model.errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
+                .font(.caption2.monospaced()).foregroundStyle(.mint).lineLimit(1)
+            if let error = model.errorMessage { Text(error).font(.caption).foregroundStyle(.red) }
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
+        .padding(.horizontal).padding(.vertical, 8).background(.ultraThinMaterial)
     }
 
     private var controller: some View {
@@ -221,9 +199,7 @@ struct GamePlayerScreen: View {
                 GameButton(key: .confirm, color: .blue, model: model)
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 14)
-        .background(.black.opacity(0.92))
+        .padding(.horizontal, 24).padding(.vertical, 14).background(.black.opacity(0.92))
     }
 
     private var directionPad: some View {
@@ -246,24 +222,20 @@ private struct GameButton: View {
     @State private var isPressed = false
 
     var body: some View {
-        Text(key.title)
-            .font(.title2.bold())
-            .frame(width: 58, height: 58)
+        Text(key.title).font(.title2.bold()).frame(width: 58, height: 58)
             .background(color.opacity(isPressed ? 0.95 : 0.55), in: Circle())
             .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
             .contentShape(Circle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        guard !isPressed else { return }
-                        isPressed = true
-                        model.sendKey(key, pressed: true)
-                    }
-                    .onEnded { _ in
-                        isPressed = false
-                        model.sendKey(key, pressed: false)
-                    }
-            )
+            .gesture(DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    guard !isPressed else { return }
+                    isPressed = true
+                    model.sendKey(key, pressed: true)
+                }
+                .onEnded { _ in
+                    isPressed = false
+                    model.sendKey(key, pressed: false)
+                })
             .accessibilityLabel(key.rawValue)
     }
 }

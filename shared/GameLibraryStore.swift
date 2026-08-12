@@ -8,21 +8,11 @@ struct ImportedGame: Codable, Equatable, Hashable, Identifiable {
     let relativeGameRoot: String
 
     var engineLabel: String { engine.rawValue.uppercased() }
-
     private var storageRoot: URL?
 
-    enum CodingKeys: String, CodingKey {
-        case id, name, engine, importedAt, relativeGameRoot
-    }
+    enum CodingKeys: String, CodingKey { case id, name, engine, importedAt, relativeGameRoot }
 
-    init(
-        id: UUID,
-        name: String,
-        engine: RPGMakerWebEngine,
-        importedAt: Date,
-        relativeGameRoot: String,
-        storageRoot: URL?
-    ) {
+    init(id: UUID, name: String, engine: RPGMakerWebEngine, importedAt: Date, relativeGameRoot: String, storageRoot: URL?) {
         self.id = id
         self.name = name
         self.engine = engine
@@ -55,9 +45,7 @@ struct ImportedGame: Codable, Equatable, Hashable, Identifiable {
         return storageRoot.appendingPathComponent("Games/\(id.uuidString)", isDirectory: true)
     }
 
-    var gameRootURL: URL {
-        containerURL.appendingPathComponent(relativeGameRoot, isDirectory: true)
-    }
+    var gameRootURL: URL { containerURL.appendingPathComponent(relativeGameRoot, isDirectory: true) }
 
     func attached(to storageRoot: URL) -> ImportedGame {
         var copy = self
@@ -66,24 +54,34 @@ struct ImportedGame: Codable, Equatable, Hashable, Identifiable {
     }
 
     static func == (lhs: ImportedGame, rhs: ImportedGame) -> Bool {
-        lhs.id == rhs.id &&
-        lhs.name == rhs.name &&
-        lhs.engine == rhs.engine &&
-        lhs.importedAt == rhs.importedAt &&
-        lhs.relativeGameRoot == rhs.relativeGameRoot
+        lhs.id == rhs.id && lhs.name == rhs.name && lhs.engine == rhs.engine &&
+        lhs.importedAt == rhs.importedAt && lhs.relativeGameRoot == rhs.relativeGameRoot
     }
 
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 extension RPGMakerWebEngine: Codable {}
+
+struct GameImportProgress: Equatable {
+    enum Phase: String {
+        case preparing = "准备导入"
+        case extracting = "正在解压"
+        case scanning = "正在识别游戏"
+        case copying = "正在复制游戏"
+        case saving = "正在保存游戏库"
+    }
+
+    let phase: Phase
+    let fraction: Double
+    var percentage: Int { Int((min(max(fraction, 0), 1) * 100).rounded()) }
+}
 
 @MainActor
 final class GameLibraryStore: ObservableObject {
     @Published private(set) var games: [ImportedGame] = []
     @Published var operationMessage: String?
+    @Published private(set) var importProgress: GameImportProgress?
 
     let storageRoot: URL
     private let fileManager: FileManager
@@ -95,9 +93,8 @@ final class GameLibraryStore: ObservableObject {
         if let storageRoot {
             self.storageRoot = storageRoot.standardizedFileURL
         } else {
-            let support = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
+            self.storageRoot = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
                 ?? fileManager.temporaryDirectory
-            self.storageRoot = support
         }
         try? fileManager.createDirectory(at: self.storageRoot, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: gamesRoot, withIntermediateDirectories: true)
@@ -105,25 +102,46 @@ final class GameLibraryStore: ObservableObject {
     }
 
     func importFolder(_ selectedFolder: URL) async throws -> ImportedGame {
-        let hasSecurityScope = selectedFolder.startAccessingSecurityScopedResource()
+        guard importProgress == nil else { throw GameImportError.importInProgress }
+        importProgress = GameImportProgress(phase: .preparing, fraction: 0)
+        operationMessage = nil
+        let scoped = selectedFolder.startAccessingSecurityScopedResource()
         defer {
-            if hasSecurityScope { selectedFolder.stopAccessingSecurityScopedResource() }
+            if scoped { selectedFolder.stopAccessingSecurityScopedResource() }
+            importProgress = nil
         }
-
-        return try await copyImportedProject(GameProjectInspector.inspect(folder: selectedFolder))
+        importProgress = GameImportProgress(phase: .scanning, fraction: 0.05)
+        let inspected = try await Task.detached(priority: .userInitiated) {
+            try GameProjectInspector.inspect(folder: selectedFolder)
+        }.value
+        return try await copyImportedProject(inspected, preferredName: nil)
     }
 
     func importZIP(_ selectedArchive: URL) async throws -> ImportedGame {
-        let hasSecurityScope = selectedArchive.startAccessingSecurityScopedResource()
+        guard importProgress == nil else { throw GameImportError.importInProgress }
+        importProgress = GameImportProgress(phase: .preparing, fraction: 0)
+        operationMessage = nil
+        let scoped = selectedArchive.startAccessingSecurityScopedResource()
         defer {
-            if hasSecurityScope { selectedArchive.stopAccessingSecurityScopedResource() }
+            if scoped { selectedArchive.stopAccessingSecurityScopedResource() }
+            importProgress = nil
         }
-
         let workspace = fileManager.temporaryDirectory
             .appendingPathComponent("IOSRPGImport-\(UUID().uuidString)", isDirectory: true)
         defer { try? fileManager.removeItem(at: workspace) }
-        try SafeZIPExtractor.extract(archive: selectedArchive, to: workspace)
-        let inspected = try GameProjectInspector.inspect(folder: workspace)
+
+        importProgress = GameImportProgress(phase: .extracting, fraction: 0)
+        try await Task.detached(priority: .userInitiated) {
+            try SafeZIPExtractor.extract(archive: selectedArchive, to: workspace) { value in
+                Task { @MainActor [weak self] in
+                    self?.importProgress = GameImportProgress(phase: .extracting, fraction: value * 0.65)
+                }
+            }
+        }.value
+        importProgress = GameImportProgress(phase: .scanning, fraction: 0.67)
+        let inspected = try await Task.detached(priority: .userInitiated) {
+            try GameProjectInspector.inspect(folder: workspace)
+        }.value
         return try await copyImportedProject(
             inspected,
             preferredName: selectedArchive.deletingPathExtension().lastPathComponent
@@ -131,9 +149,7 @@ final class GameLibraryStore: ObservableObject {
     }
 
     func delete(_ game: ImportedGame) throws {
-        if fileManager.fileExists(atPath: game.containerURL.path) {
-            try fileManager.removeItem(at: game.containerURL)
-        }
+        if fileManager.fileExists(atPath: game.containerURL.path) { try fileManager.removeItem(at: game.containerURL) }
         games.removeAll { $0.id == game.id }
         try persist()
         operationMessage = "已删除 \(game.name)"
@@ -152,22 +168,24 @@ final class GameLibraryStore: ObservableObject {
             games = []
             return
         }
-        games = decoded
-            .map { $0.attached(to: storageRoot) }
+        games = decoded.map { $0.attached(to: storageRoot) }
             .filter { fileManager.fileExists(atPath: $0.gameRootURL.path) }
             .sorted { $0.importedAt > $1.importedAt }
     }
 
-    private func copyImportedProject(
-        _ inspected: InspectedGameProject,
-        preferredName: String? = nil
-    ) async throws -> ImportedGame {
+    private func copyImportedProject(_ inspected: InspectedGameProject, preferredName: String?) async throws -> ImportedGame {
         let id = UUID()
         let container = gamesRoot.appendingPathComponent(id.uuidString, isDirectory: true)
         let destination = container.appendingPathComponent("Game", isDirectory: true)
+        importProgress = GameImportProgress(phase: .copying, fraction: 0.7)
         do {
-            try fileManager.createDirectory(at: container, withIntermediateDirectories: true)
-            try fileManager.copyItem(at: inspected.root, to: destination)
+            try await Task.detached(priority: .userInitiated) {
+                try ProgressFileCopier.copyDirectory(from: inspected.root, to: destination) { value in
+                    Task { @MainActor [weak self] in
+                        self?.importProgress = GameImportProgress(phase: .copying, fraction: 0.7 + value * 0.25)
+                    }
+                }
+            }.value
         } catch {
             try? fileManager.removeItem(at: container)
             throw GameImportError.copyFailed
@@ -184,9 +202,11 @@ final class GameLibraryStore: ObservableObject {
             relativeGameRoot: "Game",
             storageRoot: storageRoot
         )
+        importProgress = GameImportProgress(phase: .saving, fraction: 0.97)
         games.append(game)
         games.sort { $0.importedAt > $1.importedAt }
         try persist()
+        importProgress = GameImportProgress(phase: .saving, fraction: 1)
         operationMessage = "已导入 \(game.name)（\(game.engineLabel)）"
         return game
     }

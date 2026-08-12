@@ -12,6 +12,7 @@ enum GameImportError: LocalizedError, Equatable {
     case invalidArchive
     case unsafeArchive
     case archiveTooLarge
+    case importInProgress
 
     var errorDescription: String? {
         switch self {
@@ -27,6 +28,8 @@ enum GameImportError: LocalizedError, Equatable {
             return "ZIP 包含不安全的路径或符号链接。"
         case .archiveTooLarge:
             return "ZIP 内容过大，已停止导入。"
+        case .importInProgress:
+            return "已有游戏正在导入，请稍候。"
         }
     }
 }
