@@ -47,6 +47,13 @@ struct ImportedGame: Codable, Equatable, Hashable, Identifiable {
 
     var gameRootURL: URL { containerURL.appendingPathComponent(relativeGameRoot, isDirectory: true) }
 
+    func resolvedGameRootURL() throws -> URL {
+        if GameProjectInspector.engine(at: gameRootURL) != nil {
+            return gameRootURL
+        }
+        return try GameProjectInspector.inspect(folder: containerURL).root
+    }
+
     func attached(to storageRoot: URL) -> ImportedGame {
         var copy = self
         copy.storageRoot = storageRoot

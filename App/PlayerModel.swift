@@ -20,7 +20,7 @@ final class PlayerModel: ObservableObject {
         if let game {
             gameName = game.name
             status = "正在准备 \(game.name)…"
-            gameRoot = game.gameRootURL
+            gameRoot = try? game.resolvedGameRootURL()
         } else {
             gameName = "内置测试游戏"
             status = "正在准备内置 MZ 兼容测试游戏…"

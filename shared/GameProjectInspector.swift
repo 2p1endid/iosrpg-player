@@ -45,7 +45,7 @@ enum GameProjectInspector {
         var queue: [(url: URL, depth: Int)] = [(root, 0)]
         while !queue.isEmpty {
             let item = queue.removeFirst()
-            if let engine = detectEngine(at: item.url) {
+            if let engine = engine(at: item.url) {
                 return InspectedGameProject(root: item.url, engine: engine)
             }
             guard item.depth < maximumDepth else { continue }
@@ -64,7 +64,7 @@ enum GameProjectInspector {
         throw GameImportError.unsupportedProject
     }
 
-    private static func detectEngine(at folder: URL) -> RPGMakerWebEngine? {
+    static func engine(at folder: URL) -> RPGMakerWebEngine? {
         let requiredPaths = [
             "index.html",
             "data/System.json",
