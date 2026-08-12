@@ -152,6 +152,7 @@ struct GamePlayerScreen: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model: PlayerModel
     @State private var showsDiagnostics = false
+    @State private var showsController = true
 
     init(game: ImportedGame?) { _model = StateObject(wrappedValue: PlayerModel(game: game)) }
 
@@ -160,11 +161,21 @@ struct GamePlayerScreen: View {
             Color.black.ignoresSafeArea()
             VStack(spacing: 0) {
                 header
-                GameWebView(model: model)
-                    .aspectRatio(16 / 9, contentMode: .fit)
+                GeometryReader { proxy in
+                    let viewport = GameViewportSizing.fit(
+                        content: model.gameCanvasSize,
+                        container: proxy.size
+                    )
+                    ZStack {
+                        GameWebView(model: model)
+                            .frame(width: viewport.width, height: viewport.height)
+                            .background(Color.black)
+                            .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                        if showsController { controllerOverlay }
+                    }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black)
-                controller
+                    .clipped()
+                }
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -191,6 +202,12 @@ struct GamePlayerScreen: View {
                     }
                     .accessibilityLabel("错误详情")
                 }
+                Button {
+                    showsController.toggle()
+                } label: {
+                    Image(systemName: showsController ? "gamecontroller.fill" : "gamecontroller")
+                }
+                .accessibilityLabel(showsController ? "隐藏虚拟手柄" : "显示虚拟手柄")
                 Button("重新加载") { model.reloadGame() }.buttonStyle(.bordered)
             }
             Text(model.status).font(.caption).foregroundStyle(.secondary)
@@ -214,27 +231,34 @@ struct GamePlayerScreen: View {
         .padding(.horizontal).padding(.vertical, 8).background(.ultraThinMaterial)
     }
 
-    private var controller: some View {
-        HStack(alignment: .center) {
-            directionPad
-            Spacer(minLength: 24)
-            HStack(spacing: 18) {
-                GameButton(key: .cancel, color: .red, model: model)
-                GameButton(key: .confirm, color: .blue, model: model)
+    private var controllerOverlay: some View {
+        GeometryReader { proxy in
+            let buttonSize = min(max(proxy.size.height * 0.13, 48), 72)
+            HStack(alignment: .bottom) {
+                directionPad(buttonSize: buttonSize)
+                Spacer(minLength: 24)
+                HStack(alignment: .bottom, spacing: buttonSize * 0.25) {
+                    GameButton(key: .cancel, color: .red, model: model, size: buttonSize)
+                        .offset(y: -buttonSize * 0.1)
+                    GameButton(key: .confirm, color: .blue, model: model, size: buttonSize)
+                        .offset(y: -buttonSize * 0.45)
+                }
             }
+            .padding(.horizontal, max(proxy.safeAreaInsets.leading, 18))
+            .padding(.bottom, max(proxy.safeAreaInsets.bottom, 16))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
-        .padding(.horizontal, 24).padding(.vertical, 14).background(.black.opacity(0.92))
     }
 
-    private var directionPad: some View {
-        VStack(spacing: 4) {
-            GameButton(key: .up, color: .gray, model: model)
-            HStack(spacing: 4) {
-                GameButton(key: .left, color: .gray, model: model)
-                Color.clear.frame(width: 58, height: 58)
-                GameButton(key: .right, color: .gray, model: model)
+    private func directionPad(buttonSize: CGFloat) -> some View {
+        VStack(spacing: 3) {
+            GameButton(key: .up, color: .gray, model: model, size: buttonSize)
+            HStack(spacing: 3) {
+                GameButton(key: .left, color: .gray, model: model, size: buttonSize)
+                Color.clear.frame(width: buttonSize, height: buttonSize)
+                GameButton(key: .right, color: .gray, model: model, size: buttonSize)
             }
-            GameButton(key: .down, color: .gray, model: model)
+            GameButton(key: .down, color: .gray, model: model, size: buttonSize)
         }
     }
 }
@@ -243,11 +267,12 @@ private struct GameButton: View {
     let key: VirtualGameKey
     let color: Color
     @ObservedObject var model: PlayerModel
+    let size: CGFloat
     @State private var isPressed = false
 
     var body: some View {
-        Text(key.title).font(.title2.bold()).frame(width: 58, height: 58)
-            .background(color.opacity(isPressed ? 0.95 : 0.55), in: Circle())
+        Text(key.title).font(.title2.bold()).frame(width: size, height: size)
+            .background(color.opacity(isPressed ? 0.95 : 0.45), in: Circle())
             .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
             .contentShape(Circle())
             .gesture(DragGesture(minimumDistance: 0)

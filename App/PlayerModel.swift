@@ -1,5 +1,6 @@
 import Foundation
 import WebKit
+import CoreGraphics
 
 @MainActor
 final class PlayerModel: ObservableObject {
@@ -7,6 +8,7 @@ final class PlayerModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var lastGameMessage = "尚未收到游戏消息"
     @Published private(set) var diagnostics: [GameRuntimeDiagnostic] = []
+    @Published var gameCanvasSize: CGSize = .zero
 
     let game: ImportedGame?
     let gameName: String
@@ -127,6 +129,13 @@ final class PlayerModel: ObservableObject {
     }
 
     func receiveBridgeMessage(_ body: Any) {
+        if let dictionary = body as? [String: Any],
+           dictionary["category"] as? String == "viewport" {
+            let width = (dictionary["width"] as? NSNumber)?.doubleValue ?? 0
+            let height = (dictionary["height"] as? NSNumber)?.doubleValue ?? 0
+            if width > 0, height > 0 { gameCanvasSize = CGSize(width: width, height: height) }
+            return
+        }
         do {
             let diagnostic = try GameRuntimeDiagnostic.bridgeMessage(
                 body,

@@ -119,6 +119,14 @@ struct GameWebView: UIViewRepresentable {
                     model.status = "\(model.gameName) 已加载。"
                 }
                 model.didFinishLoading()
+                webView.evaluateJavaScript("""
+                (function(){
+                  var canvas = document.querySelector('canvas');
+                  var width = (typeof Graphics !== 'undefined' && Graphics.width) || (canvas && canvas.width) || 0;
+                  var height = (typeof Graphics !== 'undefined' && Graphics.height) || (canvas && canvas.height) || 0;
+                  window.webkit.messageHandlers.gameBridge.postMessage({category:'viewport', severity:'info', message:'viewport', width:width, height:height, pageURL:location.href});
+                })();
+                """)
             }
         }
 
