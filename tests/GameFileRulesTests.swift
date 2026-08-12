@@ -4,6 +4,58 @@ import ZIPFoundation
 
 @MainActor
 final class GameFileRulesTests: XCTestCase {
+    func testRuntimeDiagnosticFormatsCompleteJavaScriptReport() {
+        let diagnostic = GameRuntimeDiagnostic(
+            id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_000),
+            severity: .error,
+            category: .javascript,
+            gameName: "Karryn's Prison",
+            gameID: "game-id",
+            pageURL: "http://127.0.0.1:1234/games/game-id/index.html",
+            message: "TypeError: PluginManager.setup is not a function",
+            sourceURL: "http://127.0.0.1:1234/games/game-id/js/main.js",
+            line: 5,
+            column: 15,
+            stack: "main.js:5:15\nbootstrap.js:1:1",
+            details: nil
+        )
+
+        let report = GameRuntimeDiagnosticFormatter.report(
+            diagnostics: [diagnostic],
+            engineLabel: "MZ"
+        )
+
+        XCTAssertTrue(report.contains("Karryn's Prison"))
+        XCTAssertTrue(report.contains("TypeError: PluginManager.setup is not a function"))
+        XCTAssertTrue(report.contains("js/main.js:5:15"))
+        XCTAssertTrue(report.contains("main.js:5:15\nbootstrap.js:1:1"))
+    }
+
+    func testRuntimeDiagnosticDecodesStructuredBridgeMessage() throws {
+        let body: [String: Any] = [
+            "category": "javascript",
+            "severity": "error",
+            "message": "boom",
+            "pageURL": "http://127.0.0.1/index.html",
+            "sourceURL": "http://127.0.0.1/js/main.js",
+            "line": 5,
+            "column": 2,
+            "stack": "stack"
+        ]
+
+        let diagnostic = try GameRuntimeDiagnostic.bridgeMessage(
+            body,
+            gameName: "Game",
+            gameID: "id"
+        )
+
+        XCTAssertEqual(diagnostic.category, .javascript)
+        XCTAssertEqual(diagnostic.message, "boom")
+        XCTAssertEqual(diagnostic.line, 5)
+        XCTAssertEqual(diagnostic.stack, "stack")
+    }
+
     func testImportPickerSelectionKeepsSourceUntilCompletion() {
         var state = GameImportPickerState()
         state.present(.zip)
