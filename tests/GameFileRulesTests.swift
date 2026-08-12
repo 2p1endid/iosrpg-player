@@ -102,17 +102,14 @@ final class GameFileRulesTests: XCTestCase {
         )
     }
 
-    func testCompatibilityPatcherPreventsTilemapPluginManagerCollision() throws {
-        let source = "var PluginManager= { parameters: function(){} }; PluginManager.parameters();"
-        let patchedData = GameRuntimeCompatibilityPatcher.patch(
-            Data(source.utf8),
-            relativePath: "js/libs/rpgmaker.js"
-        )
-        let patched = try XCTUnwrap(String(data: patchedData, encoding: .utf8))
+    func testCompatibilityPatcherLeavesFunctionScopedTilemapManagerUntouched() {
+        let source = "function requireRpgMaker(){ var PluginManager={parameters:function(){}}; PluginManager.parameters(); }"
+        let data = Data(source.utf8)
 
-        XCTAssertFalse(patched.contains("var PluginManager="))
-        XCTAssertTrue(patched.contains("var TilemapPluginManager="))
-        XCTAssertTrue(patched.contains("TilemapPluginManager.parameters"))
+        XCTAssertEqual(
+            GameRuntimeCompatibilityPatcher.patch(data, relativePath: "js/libs/rpgmaker.js"),
+            data
+        )
     }
 
     func testCompatibilityPatcherReplacesClassicScriptImportMetaFallback() throws {

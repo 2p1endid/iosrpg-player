@@ -18,7 +18,7 @@
 - 完整运行诊断：JavaScript/Promise/console/HTTP 错误可查看全文、调用栈并一键复制或分享。
 - RPG Maker 兼容虚拟输入桥，同时派发 DOM 键盘事件并同步 `Input._currentState`。
 - 按游戏 Canvas 比例自适应画面，虚拟手柄覆盖显示且可隐藏。
-- 兼容会在第三方 tilemap 库中错误覆盖全局 `PluginManager` 的 MV 项目（例如 Karryn's Prison 所带 `js/libs/rpgmaker.js`）。
+- 兼容 NW.js 日志包在普通浏览器/WKWebView 经典脚本中使用 `import.meta` 的启动错误（例如 Karryn's Prison 的 `js/libs/logger.js`）。
 - MV/MZ 项目标志识别。
 - 路径穿越防护和 MIME 类型映射。
 - Swift 虚拟按键到 JavaScript `KeyboardEvent`。

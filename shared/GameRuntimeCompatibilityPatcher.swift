@@ -2,16 +2,16 @@ import Foundation
 
 enum GameRuntimeCompatibilityPatcher {
     static func patch(_ data: Data, relativePath: String) -> Data {
-        guard relativePath.caseInsensitiveCompare("js/libs/rpgmaker.js") == .orderedSame,
-              var source = String(data: data, encoding: .utf8),
-              let declarationRange = source.range(of: "var PluginManager=") else {
+        guard var source = String(data: data, encoding: .utf8) else {
             return data
         }
-        source.replaceSubrange(declarationRange, with: "var TilemapPluginManager=")
-        source = source.replacingOccurrences(
-            of: "PluginManager.parameters",
-            with: "TilemapPluginManager.parameters"
-        )
+
+        if relativePath.caseInsensitiveCompare("js/libs/logger.js") == .orderedSame {
+            source = source.replacingOccurrences(
+                of: "const f = new Function('p', 'return new URL(p, import.meta.url).pathname');",
+                with: "const f = function(p) { return new URL(p, (document.currentScript && document.currentScript.src) || document.baseURI).pathname; };"
+            )
+        }
         return Data(source.utf8)
     }
 }
