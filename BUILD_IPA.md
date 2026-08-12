@@ -69,6 +69,14 @@ IOSRPGPlayer-unsigned.ipa
 
 该文件扩展名和目录结构是 IPA，但由于没有 Apple 证书和 provisioning profile，它仍然不能直接安装到普通 iPhone。它用于验证设备架构构建，或者交给合法的个人开发签名/CI 签名流程继续签名。
 
+部分 Windows 重签名工具（包括某些 Sideloadly 版本）会把“完全没有 Mach-O `LC_CODE_SIGNATURE` 的二进制”直接判定为 `Invalid file`，还没有进入 Apple Account 重签名阶段。因此工作流会额外对设备 App 做一次不含开发者身份和 provisioning profile 的 ad-hoc 签名，并输出：
+
+```text
+IOSRPGPlayer-sideloadly.ipa
+```
+
+这个文件包含可被重签名工具识别和替换的 `_CodeSignature`/`LC_CODE_SIGNATURE`，但它仍不是可直接安装的开发者签名 IPA。使用 Sideloadly 时应选择该文件，而不是 `IOSRPGPlayer-unsigned.ipa`。
+
 ## 导出已签名 IPA
 
 首先复制配置模板：

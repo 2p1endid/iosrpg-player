@@ -129,6 +129,24 @@ jobs:
           )
           unzip -t build/IOSRPGPlayer-unsigned.ipa
 
+      - name: Ad-hoc sign IPA for Sideloadly re-signing
+        run: |
+          APP_PATH="build/Payload/IOSRPGPlayer.app"
+          /usr/bin/codesign \
+            --force \
+            --deep \
+            --sign - \
+            --timestamp=none \
+            "$APP_PATH"
+          /usr/bin/codesign --verify --deep --strict --verbose=4 "$APP_PATH"
+          test -d "$APP_PATH/_CodeSignature"
+          otool -l "$APP_PATH/IOSRPGPlayer" | grep -A4 LC_CODE_SIGNATURE | tee build/device-code-signature.log
+          (
+            cd build
+            ditto -c -k --sequesterRsrc --keepParent Payload IOSRPGPlayer-sideloadly.ipa
+          )
+          unzip -t build/IOSRPGPlayer-sideloadly.ipa
+
       - name: Upload build evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -139,4 +157,5 @@ jobs:
           path: |
             build/*.log
             build/IOSRPGPlayer-unsigned.ipa
+            build/IOSRPGPlayer-sideloadly.ipa
             build/IOSRPGPlayer.xcarchive/Info.plist
