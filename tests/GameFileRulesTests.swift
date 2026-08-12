@@ -160,6 +160,27 @@ final class GameFileRulesTests: XCTestCase {
         ))
     }
 
+    func testLocalHTTPServerServesIndexFromLoopback() async throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("index.html")
+        let server = LocalGameHTTPServer(
+            gameRoot: fixture.root,
+            gameID: "fixture",
+            preferredPort: nil
+        )
+        defer { server.stop() }
+
+        let baseURL = try await server.start()
+        let (data, response) = try await URLSession.shared.data(
+            from: baseURL.appendingPathComponent("index.html")
+        )
+
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+        XCTAssertFalse(data.isEmpty)
+        XCTAssertEqual(baseURL.host, "127.0.0.1")
+    }
+
     func testFindsNestedMZGameRoot() throws {
         let fixture = try TemporaryGameFixture()
         defer { fixture.remove() }
