@@ -84,6 +84,24 @@ final class GameFileRulesTests: XCTestCase {
         }
     }
 
+    func testGameViewportFitsSummerMemoriesCanvasWithoutDistortion() {
+        let size = GameViewportSizing.fit(
+            content: CGSize(width: 745, height: 400),
+            container: CGSize(width: 1_200, height: 700)
+        )
+
+        XCTAssertEqual(size.width / size.height, 745.0 / 400.0, accuracy: 0.0001)
+        XCTAssertLessThanOrEqual(size.width, 1_200)
+        XCTAssertLessThanOrEqual(size.height, 700)
+    }
+
+    func testGameViewportFallsBackToContainerForUnknownCanvas() {
+        XCTAssertEqual(
+            GameViewportSizing.fit(content: .zero, container: CGSize(width: 800, height: 600)),
+            CGSize(width: 800, height: 600)
+        )
+    }
+
     func testImportPickerSelectionKeepsSourceUntilCompletion() {
         var state = GameImportPickerState()
         state.present(.zip)
