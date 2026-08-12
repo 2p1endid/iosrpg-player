@@ -173,7 +173,7 @@ private extension JSONEncoder {
     static var libraryEncoder: JSONEncoder {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
+        encoder.dateEncodingStrategy = .secondsSince1970
         return encoder
     }
 }
@@ -181,7 +181,7 @@ private extension JSONEncoder {
 private extension JSONDecoder {
     static var libraryDecoder: JSONDecoder {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = .secondsSince1970
         return decoder
     }
 }
