@@ -134,6 +134,32 @@ final class GameFileRulesTests: XCTestCase {
         }
     }
 
+    func testLocalHTTPRouteMapsRootToIndexHTML() throws {
+        let route = try LocalGameHTTPRoute.parse(path: "/", expectedGameID: "fixture")
+
+        XCTAssertEqual(route.relativePath, "index.html")
+    }
+
+    func testLocalHTTPRouteAcceptsGamePrefixedPath() throws {
+        let route = try LocalGameHTTPRoute.parse(
+            path: "/games/fixture/data/System.json",
+            expectedGameID: "fixture"
+        )
+
+        XCTAssertEqual(route.relativePath, "data/System.json")
+    }
+
+    func testLocalHTTPRouteRejectsWrongGameAndTraversal() {
+        XCTAssertThrowsError(try LocalGameHTTPRoute.parse(
+            path: "/games/other/index.html",
+            expectedGameID: "fixture"
+        ))
+        XCTAssertThrowsError(try LocalGameHTTPRoute.parse(
+            path: "/games/fixture/../../secret.txt",
+            expectedGameID: "fixture"
+        ))
+    }
+
     func testFindsNestedMZGameRoot() throws {
         let fixture = try TemporaryGameFixture()
         defer { fixture.remove() }
