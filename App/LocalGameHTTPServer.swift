@@ -107,9 +107,13 @@ final class LocalGameHTTPServer {
             let route = try LocalGameHTTPRoute.parse(path: components.percentEncodedPath, expectedGameID: gameID)
             let requestURL = URL(string: "rpg-game://localhost/\(route.relativePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? route.relativePath)")!
             let resource = try GameResourceResolver.resolve(requestURL: requestURL, gameRoot: gameRoot)
+            let responseData = GameRuntimeCompatibilityPatcher.patch(
+                resource.data,
+                relativePath: route.relativePath
+            )
             send(
                 status: 200,
-                body: resource.data,
+                body: responseData,
                 mimeType: resource.textEncodingName.map { "\(resource.mimeType); charset=\($0)" } ?? resource.mimeType,
                 method: method,
                 on: connection
@@ -127,6 +131,7 @@ final class LocalGameHTTPServer {
         case .invalidPath, .absolutePath, .pathTraversal: return 400
         }
     }
+
 
     private func send(status: Int, body: Data, mimeType: String, method: String, on connection: NWConnection) {
         let reason: String
