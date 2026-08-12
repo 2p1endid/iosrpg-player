@@ -4,6 +4,28 @@ import ZIPFoundation
 
 @MainActor
 final class GameFileRulesTests: XCTestCase {
+    func testImportPickerSelectionKeepsSourceUntilCompletion() {
+        var state = GameImportPickerState()
+        state.present(.zip)
+
+        state.presentationChanged(isPresented: false)
+
+        XCTAssertEqual(state.source, .zip)
+        XCTAssertFalse(state.isPresented)
+        XCTAssertEqual(state.consumeSource(), .zip)
+        XCTAssertNil(state.source)
+    }
+
+    func testImportPickerCancellationClearsSource() {
+        var state = GameImportPickerState()
+        state.present(.folder)
+
+        state.cancel()
+
+        XCTAssertNil(state.source)
+        XCTAssertFalse(state.isPresented)
+    }
+
     func testDetectsMVProject() {
         XCTAssertEqual(
             GameFileRules.detectEngine(paths: [
