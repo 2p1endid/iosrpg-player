@@ -86,10 +86,15 @@ struct GameWebView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse) async -> WKNavigationResponsePolicy {
             guard let response = navigationResponse.response as? HTTPURLResponse else { return .allow }
-            if response.statusCode >= 400 {
+            if let diagnostic = GameHTTPNavigationDiagnostic.evaluate(
+                statusCode: response.statusCode,
+                path: response.url?.path ?? ""
+            ) {
                 Task { @MainActor in
-                    self.model?.errorMessage = "资源加载失败：HTTP \(response.statusCode) \(response.url?.path ?? "")"
+                    self.model?.errorMessage = diagnostic.message
+                    self.model?.status = diagnostic.status
                 }
+                return .cancel
             }
             return .allow
         }
