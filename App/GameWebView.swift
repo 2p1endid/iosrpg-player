@@ -12,22 +12,7 @@ struct GameWebView: UIViewRepresentable {
         let userContentController = WKUserContentController()
         userContentController.add(context.coordinator, name: "gameBridge")
         userContentController.addUserScript(WKUserScript(
-            source: """
-            window.addEventListener('error', function(event) {
-              window.webkit.messageHandlers.gameBridge.postMessage('JS错误: ' + (event.message || '未知错误'));
-            });
-            window.addEventListener('unhandledrejection', function(event) {
-              window.webkit.messageHandlers.gameBridge.postMessage('Promise错误: ' + String(event.reason || '未知错误'));
-            });
-            (function() {
-              var originalError = console.error;
-              console.error = function() {
-                var text = Array.prototype.map.call(arguments, String).join(' ');
-                window.webkit.messageHandlers.gameBridge.postMessage('控制台错误: ' + text);
-                return originalError.apply(console, arguments);
-              };
-            })();
-            """,
+            source: Self.diagnosticScript,
             injectionTime: .atDocumentStart,
             forMainFrameOnly: false
         ))
@@ -54,6 +39,66 @@ struct GameWebView: UIViewRepresentable {
 
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 
+    private static let diagnosticScript = #"""
+    (function() {
+      function safeString(value) {
+        try {
+          if (value instanceof Error) return value.name + ': ' + value.message;
+          if (typeof value === 'string') return value;
+          if (value === null || typeof value === 'number' || typeof value === 'boolean') return String(value);
+          var seen = [];
+          return JSON.stringify(value, function(key, item) {
+            if (typeof item === 'object' && item !== null) {
+              if (seen.indexOf(item) >= 0) return '[Circular]';
+              seen.push(item);
+            }
+            return item;
+          }).slice(0, 12000);
+        } catch (_) { return String(value); }
+      }
+      function post(payload) {
+        try { window.webkit.messageHandlers.gameBridge.postMessage(payload); } catch (_) {}
+      }
+      window.addEventListener('error', function(event) {
+        post({
+          category: 'javascript', severity: 'error',
+          message: event.message || (event.error && event.error.message) || '未知错误',
+          pageURL: location.href,
+          sourceURL: event.filename || null,
+          line: event.lineno || null,
+          column: event.colno || null,
+          stack: event.error && event.error.stack ? String(event.error.stack) : null,
+          details: event.error && event.error.name ? String(event.error.name) : null
+        });
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        var reason = event.reason;
+        post({
+          category: 'promise', severity: 'error',
+          message: reason && reason.message ? String(reason.message) : safeString(reason || '未知错误'),
+          pageURL: location.href, sourceURL: null, line: null, column: null,
+          stack: reason && reason.stack ? String(reason.stack) : null,
+          details: safeString(reason)
+        });
+      });
+      ['error', 'warn'].forEach(function(level) {
+        var original = console[level];
+        console[level] = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var firstError = args.find(function(item) { return item instanceof Error; });
+          post({
+            category: 'console', severity: level === 'error' ? 'error' : 'warning',
+            message: args.map(safeString).join(' '), pageURL: location.href,
+            sourceURL: null, line: null, column: null,
+            stack: firstError && firstError.stack ? String(firstError.stack) : null,
+            details: null
+          });
+          return original.apply(console, arguments);
+        };
+      });
+    })();
+    """#
+
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
         private weak var model: PlayerModel?
 
@@ -62,13 +107,7 @@ struct GameWebView: UIViewRepresentable {
         }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-            let text: String
-            if let value = message.body as? String {
-                text = value
-            } else {
-                text = String(describing: message.body)
-            }
-            Task { @MainActor in self.model?.receiveGameMessage(text) }
+            Task { @MainActor in self.model?.receiveBridgeMessage(message.body) }
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -80,7 +119,6 @@ struct GameWebView: UIViewRepresentable {
                     model.status = "\(model.gameName) 已加载。"
                 }
                 model.didFinishLoading()
-                self.model?.errorMessage = nil
             }
         }
 
@@ -93,6 +131,10 @@ struct GameWebView: UIViewRepresentable {
                 Task { @MainActor in
                     self.model?.errorMessage = diagnostic.message
                     self.model?.status = diagnostic.status
+                    self.model?.recordHTTPDiagnostic(
+                        statusCode: response.statusCode,
+                        path: response.url?.path ?? ""
+                    )
                 }
                 return .cancel
             }
@@ -109,14 +151,22 @@ struct GameWebView: UIViewRepresentable {
 
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
             Task { @MainActor in
-                self.model?.errorMessage = "WebKit 游戏进程意外终止。"
+                self.model?.receiveBridgeMessage([
+                    "category": "navigation", "severity": "error",
+                    "message": "WebKit 游戏进程意外终止。",
+                    "pageURL": webView.url?.absoluteString ?? ""
+                ])
                 self.model?.status = "运行失败"
             }
         }
 
         private func report(_ error: Error) {
             Task { @MainActor in
-                self.model?.errorMessage = error.localizedDescription
+                self.model?.receiveBridgeMessage([
+                    "category": "navigation", "severity": "error",
+                    "message": error.localizedDescription,
+                    "pageURL": self.model?.webView?.url?.absoluteString ?? ""
+                ])
                 self.model?.status = "加载失败"
             }
         }

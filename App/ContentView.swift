@@ -151,6 +151,7 @@ private struct ImportProgressOverlay: View {
 struct GamePlayerScreen: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model: PlayerModel
+    @State private var showsDiagnostics = false
 
     init(game: ImportedGame?) { _model = StateObject(wrappedValue: PlayerModel(game: game)) }
 
@@ -169,6 +170,9 @@ struct GamePlayerScreen: View {
         .navigationBarBackButtonHidden(true)
         .preferredColorScheme(.dark)
         .onDisappear { model.stop() }
+        .sheet(isPresented: $showsDiagnostics) {
+            GameDiagnosticsView(model: model)
+        }
     }
 
     private var header: some View {
@@ -177,12 +181,35 @@ struct GamePlayerScreen: View {
                 Button { dismiss() } label: { Label("游戏库", systemImage: "chevron.left") }
                 Text(model.gameName).font(.headline).lineLimit(1)
                 Spacer()
+                if !model.diagnostics.isEmpty {
+                    Button {
+                        showsDiagnostics = true
+                    } label: {
+                        Label("错误详情", systemImage: model.hasDiagnosticErrors ? "exclamationmark.triangle.fill" : "doc.text.magnifyingglass")
+                            .labelStyle(.iconOnly)
+                            .foregroundStyle(model.hasDiagnosticErrors ? .red : .secondary)
+                    }
+                    .accessibilityLabel("错误详情")
+                }
                 Button("重新加载") { model.reloadGame() }.buttonStyle(.bordered)
             }
             Text(model.status).font(.caption).foregroundStyle(.secondary)
             Text("JS: \(model.lastGameMessage)")
-                .font(.caption2.monospaced()).foregroundStyle(.mint).lineLimit(1)
-            if let error = model.errorMessage { Text(error).font(.caption).foregroundStyle(.red) }
+                .font(.caption2.monospaced()).foregroundStyle(.mint).lineLimit(2)
+                .contentShape(Rectangle())
+                .onTapGesture { if !model.diagnostics.isEmpty { showsDiagnostics = true } }
+            if let error = model.errorMessage {
+                Button {
+                    showsDiagnostics = true
+                } label: {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.horizontal).padding(.vertical, 8).background(.ultraThinMaterial)
     }

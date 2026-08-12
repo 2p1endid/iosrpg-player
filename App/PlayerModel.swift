@@ -6,6 +6,7 @@ final class PlayerModel: ObservableObject {
     @Published var status: String
     @Published var errorMessage: String?
     @Published var lastGameMessage = "尚未收到游戏消息"
+    @Published private(set) var diagnostics: [GameRuntimeDiagnostic] = []
 
     let game: ImportedGame?
     let gameName: String
@@ -14,6 +15,16 @@ final class PlayerModel: ObservableObject {
     private let gameRoot: URL?
     private var httpServer: LocalGameHTTPServer?
     private var isLoading = false
+    private let maximumDiagnosticCount = 100
+
+    var latestDiagnostic: GameRuntimeDiagnostic? { diagnostics.last }
+    var hasDiagnosticErrors: Bool { diagnostics.contains { $0.severity == .error } }
+    var copyableDiagnosticReport: String {
+        GameRuntimeDiagnosticFormatter.report(
+            diagnostics: diagnostics,
+            engineLabel: game?.engineLabel
+        )
+    }
 
     init(game: ImportedGame? = nil) {
         self.game = game
@@ -56,6 +67,12 @@ final class PlayerModel: ObservableObject {
             } catch {
                 guard self.httpServer === server else { return }
                 self.errorMessage = "本地游戏服务器启动失败：\(error.localizedDescription)"
+                self.appendDiagnostic(GameRuntimeDiagnostic(
+                    id: UUID(), timestamp: Date(), severity: .error, category: .server,
+                    gameName: self.gameName, gameID: self.game?.id.uuidString,
+                    pageURL: nil, message: error.localizedDescription,
+                    sourceURL: nil, line: nil, column: nil, stack: nil, details: nil
+                ))
                 self.status = "无法启动"
                 self.isLoading = false
             }
@@ -95,8 +112,53 @@ final class PlayerModel: ObservableObject {
 
     func receiveGameMessage(_ message: String) {
         lastGameMessage = message
-        if message.hasPrefix("JS错误:") || message.hasPrefix("Promise错误:") || message.hasPrefix("控制台错误:") {
+        let diagnostic = GameRuntimeDiagnostic.legacyMessage(
+            message,
+            gameName: gameName,
+            gameID: game?.id.uuidString
+        )
+        appendDiagnostic(diagnostic)
+        if diagnostic.severity == .error {
             errorMessage = message
+        }
+    }
+
+    func receiveBridgeMessage(_ body: Any) {
+        do {
+            let diagnostic = try GameRuntimeDiagnostic.bridgeMessage(
+                body,
+                gameName: gameName,
+                gameID: game?.id.uuidString
+            )
+            appendDiagnostic(diagnostic)
+            lastGameMessage = diagnostic.message
+            if diagnostic.severity == .error { errorMessage = diagnostic.message }
+        } catch {
+            receiveGameMessage(String(describing: body))
+        }
+    }
+
+    func recordHTTPDiagnostic(statusCode: Int, path: String) {
+        let message = "资源加载失败：HTTP \(statusCode) \(path)"
+        appendDiagnostic(GameRuntimeDiagnostic(
+            id: UUID(), timestamp: Date(), severity: .error, category: .http,
+            gameName: gameName, gameID: game?.id.uuidString,
+            pageURL: webView?.url?.absoluteString, message: message,
+            sourceURL: nil, line: nil, column: nil, stack: nil,
+            details: "status=\(statusCode) path=\(path)"
+        ))
+    }
+
+    func clearDiagnostics() {
+        diagnostics.removeAll()
+        errorMessage = nil
+        lastGameMessage = "尚未收到游戏消息"
+    }
+
+    private func appendDiagnostic(_ diagnostic: GameRuntimeDiagnostic) {
+        diagnostics.append(diagnostic)
+        if diagnostics.count > maximumDiagnosticCount {
+            diagnostics.removeFirst(diagnostics.count - maximumDiagnosticCount)
         }
     }
 }
