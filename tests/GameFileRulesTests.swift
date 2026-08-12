@@ -65,6 +65,47 @@ final class GameFileRulesTests: XCTestCase {
             XCTAssertEqual(error as? GameImportError, .unsupportedProject)
         }
     }
+
+    func testLibraryImportsProjectAndPersistsMetadata() async throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("game/index.html")
+        try fixture.write("game/data/System.json")
+        try fixture.write("game/js/rpg_core.js")
+        try fixture.write("game/js/rpg_managers.js")
+
+        let storage = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: storage) }
+        let library = GameLibraryStore(storageRoot: storage)
+
+        let game = try await library.importFolder(fixture.root)
+        let reloaded = GameLibraryStore(storageRoot: storage)
+
+        XCTAssertEqual(game.engine, .mv)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: game.gameRootURL.path))
+        XCTAssertEqual(reloaded.games, [game])
+    }
+
+    func testLibraryDeletesImportedGameFiles() async throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("index.html")
+        try fixture.write("data/System.json")
+        try fixture.write("js/rmmz_core.js")
+        try fixture.write("js/rmmz_managers.js")
+
+        let storage = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: storage) }
+        let library = GameLibraryStore(storageRoot: storage)
+        let game = try await library.importFolder(fixture.root)
+
+        try library.delete(game)
+
+        XCTAssertTrue(library.games.isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: game.containerURL.path))
+    }
 }
 
 private struct TemporaryGameFixture {
