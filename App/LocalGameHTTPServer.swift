@@ -137,15 +137,13 @@ final class LocalGameHTTPServer {
         case 405: reason = "Method Not Allowed"
         default: reason = "Internal Server Error"
         }
-        let headers = """
-        HTTP/1.1 \(status) \(reason)\r
-        Content-Type: \(mimeType)\r
-        Content-Length: \(body.count)\r
-        Cache-Control: no-store\r
-        Access-Control-Allow-Origin: *\r
-        Connection: close\r
-        \r
-        """
+        let headers = "HTTP/1.1 \(status) \(reason)\r\n" +
+            "Content-Type: \(mimeType)\r\n" +
+            "Content-Length: \(body.count)\r\n" +
+            "Cache-Control: no-store\r\n" +
+            "Access-Control-Allow-Origin: *\r\n" +
+            "Connection: close\r\n" +
+            "\r\n"
         var response = Data(headers.utf8)
         if method != "HEAD" { response.append(body) }
         connection.send(content: response, completion: .contentProcessed { _ in connection.cancel() })
