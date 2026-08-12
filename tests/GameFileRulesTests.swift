@@ -95,6 +95,31 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(resource.mimeType, "application/json")
     }
 
+    func testResourceResolverMatchesCaseInsensitiveGamePaths() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("data/System.json")
+
+        let resource = try GameResourceResolver.resolve(
+            requestURL: URL(string: "rpg-game://fixture/data/system.json")!,
+            gameRoot: fixture.root
+        )
+
+        XCTAssertEqual(resource.mimeType, "application/json")
+    }
+
+    func testResourceResolverReportsMissingRelativePath() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+
+        XCTAssertThrowsError(try GameResourceResolver.resolve(
+            requestURL: URL(string: "rpg-game://fixture/js/plugins.js")!,
+            gameRoot: fixture.root
+        )) { error in
+            XCTAssertEqual(error as? GameFileError, .missingResource("js/plugins.js"))
+        }
+    }
+
     func testFindsNestedMZGameRoot() throws {
         let fixture = try TemporaryGameFixture()
         defer { fixture.remove() }
