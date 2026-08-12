@@ -1,6 +1,7 @@
 import XCTest
 @testable import IOSRPGPlayer
 
+@MainActor
 final class GameFileRulesTests: XCTestCase {
     func testDetectsMVProject() {
         XCTAssertEqual(
