@@ -9,6 +9,9 @@ enum GameImportError: LocalizedError, Equatable {
     case unsupportedProject
     case inaccessibleFolder
     case copyFailed
+    case invalidArchive
+    case unsafeArchive
+    case archiveTooLarge
 
     var errorDescription: String? {
         switch self {
@@ -18,6 +21,12 @@ enum GameImportError: LocalizedError, Equatable {
             return "无法读取所选文件夹。"
         case .copyFailed:
             return "复制游戏文件失败。"
+        case .invalidArchive:
+            return "ZIP 文件损坏或格式不受支持。"
+        case .unsafeArchive:
+            return "ZIP 包含不安全的路径或符号链接。"
+        case .archiveTooLarge:
+            return "ZIP 内容过大，已停止导入。"
         }
     }
 }

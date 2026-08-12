@@ -139,6 +139,23 @@ final class GameLibraryStore: ObservableObject {
         return game
     }
 
+    func importZIP(_ selectedArchive: URL) async throws -> ImportedGame {
+        let hasSecurityScope = selectedArchive.startAccessingSecurityScopedResource()
+        defer {
+            if hasSecurityScope { selectedArchive.stopAccessingSecurityScopedResource() }
+        }
+
+        let workspace = fileManager.temporaryDirectory
+            .appendingPathComponent("IOSRPGImport-\(UUID().uuidString)", isDirectory: true)
+        defer { try? fileManager.removeItem(at: workspace) }
+        try SafeZIPExtractor.extract(archive: selectedArchive, to: workspace)
+        let inspected = try GameProjectInspector.inspect(folder: workspace)
+        return try await copyImportedProject(
+            inspected,
+            preferredName: selectedArchive.deletingPathExtension().lastPathComponent
+        )
+    }
+
     func delete(_ game: ImportedGame) throws {
         if fileManager.fileExists(atPath: game.containerURL.path) {
             try fileManager.removeItem(at: game.containerURL)
@@ -165,6 +182,39 @@ final class GameLibraryStore: ObservableObject {
             .map { $0.attached(to: storageRoot) }
             .filter { fileManager.fileExists(atPath: $0.gameRootURL.path) }
             .sorted { $0.importedAt > $1.importedAt }
+    }
+
+    private func copyImportedProject(
+        _ inspected: InspectedGameProject,
+        preferredName: String? = nil
+    ) async throws -> ImportedGame {
+        let id = UUID()
+        let container = gamesRoot.appendingPathComponent(id.uuidString, isDirectory: true)
+        let destination = container.appendingPathComponent("Game", isDirectory: true)
+        do {
+            try fileManager.createDirectory(at: container, withIntermediateDirectories: true)
+            try fileManager.copyItem(at: inspected.root, to: destination)
+        } catch {
+            try? fileManager.removeItem(at: container)
+            throw GameImportError.copyFailed
+        }
+
+        let detectedName = inspected.root.deletingPathExtension().lastPathComponent
+        let requestedName = preferredName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayName = requestedName?.isEmpty == false ? requestedName! : detectedName
+        let game = ImportedGame(
+            id: id,
+            name: displayName.isEmpty ? "Imported Game" : displayName,
+            engine: inspected.engine,
+            importedAt: Date(),
+            relativeGameRoot: "Game",
+            storageRoot: storageRoot
+        )
+        games.append(game)
+        games.sort { $0.importedAt > $1.importedAt }
+        try persist()
+        operationMessage = "已导入 \(game.name)（\(game.engineLabel)）"
+        return game
     }
 
     private func persist() throws {

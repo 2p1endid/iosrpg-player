@@ -185,10 +185,16 @@ private struct TemporaryGameFixture {
         guard let zip = Archive(url: archive, accessMode: .create) else {
             throw GameImportError.invalidArchive
         }
-        try zip.addEntry(with: "../escape.txt", type: .file, uncompressedSize: 6) { position, size in
+        try zip.addEntry(
+            with: "../escape.txt",
+            type: .file,
+            uncompressedSize: 6,
+            compressionMethod: .none,
+            provider: { position, size in
             let data = Data("escape".utf8)
             return data.subdata(in: Int(position)..<min(Int(position) + size, data.count))
-        }
+            }
+        )
         return archive
     }
 }
