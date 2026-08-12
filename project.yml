@@ -23,6 +23,8 @@ targets:
       - path: shared/GameImportPickerState.swift
       - path: shared/LocalGameHTTPRoute.swift
       - path: shared/GameHTTPNavigationDiagnostic.swift
+      - path: shared/GameRuntimeDiagnostic.swift
+      - path: shared/GameRuntimeDiagnosticFormatter.swift
       - path: Resources/TestGame
         type: folder
         buildPhase: resources
