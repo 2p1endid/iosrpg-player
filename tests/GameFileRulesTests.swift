@@ -188,7 +188,7 @@ private struct TemporaryGameFixture {
         try zip.addEntry(
             with: "../escape.txt",
             type: .file,
-            uncompressedSize: 6,
+            uncompressedSize: Int64(6),
             compressionMethod: .none,
             provider: { position, size in
             let data = Data("escape".utf8)
