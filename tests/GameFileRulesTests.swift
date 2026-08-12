@@ -81,6 +81,20 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(resource.textEncodingName, "utf-8")
     }
 
+    func testResourceResolverMapsGameRootRequestToIndexHTML() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("index.html")
+
+        let resource = try GameResourceResolver.resolve(
+            requestURL: URL(string: "rpg-game://fixture/")!,
+            gameRoot: fixture.root
+        )
+
+        XCTAssertEqual(resource.statusCode, 200)
+        XCTAssertEqual(resource.mimeType, "text/html")
+    }
+
     func testResourceResolverHandlesQueryStringsAndPercentEncodedNames() throws {
         let fixture = try TemporaryGameFixture()
         defer { fixture.remove() }
