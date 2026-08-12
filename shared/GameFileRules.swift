@@ -79,18 +79,18 @@ enum GameFileRules {
     }
 }
 
-enum GameFileError: LocalizedError {
+enum GameFileError: LocalizedError, Equatable {
     case invalidPath
     case absolutePath
     case pathTraversal
-    case missingResource
+    case missingResource(String)
 
     var errorDescription: String? {
         switch self {
         case .invalidPath: return "资源路径无效。"
         case .absolutePath: return "不允许访问绝对路径。"
         case .pathTraversal: return "资源路径超出了游戏目录。"
-        case .missingResource: return "找不到游戏资源。"
+        case .missingResource(let path): return "找不到游戏资源：\(path)"
         }
     }
 }

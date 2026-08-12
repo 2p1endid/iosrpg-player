@@ -11,7 +11,7 @@ final class GameResourceSchemeHandler: NSObject, WKURLSchemeHandler {
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
         do {
             guard let gameRoot, let requestURL = urlSchemeTask.request.url else {
-                throw GameFileError.missingResource
+                throw GameFileError.missingResource("入口请求")
             }
             let resource = try GameResourceResolver.resolve(requestURL: requestURL, gameRoot: gameRoot)
             guard let response = HTTPURLResponse(
@@ -24,7 +24,7 @@ final class GameResourceSchemeHandler: NSObject, WKURLSchemeHandler {
                     "Cache-Control": "no-cache"
                 ]
             ) else {
-                throw GameFileError.missingResource
+                throw GameFileError.missingResource(requestURL.path)
             }
             urlSchemeTask.didReceive(response)
             urlSchemeTask.didReceive(resource.data)
