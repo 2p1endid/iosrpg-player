@@ -4,6 +4,12 @@
 
 ## 当前能力
 
+- 从 iOS“文件”App 选择已经解压的 RPG Maker MV/MZ 游戏文件夹
+- 自动查找最多四层嵌套目录中的游戏根目录
+- 将游戏复制到 App 的 Application Support 沙盒并持久化游戏库
+- 从游戏库启动、重新加载和删除游戏
+- 每个游戏通过受限 `rpg-game://<游戏UUID>/` 地址加载本地资源
+
 - SwiftUI + WKWebView 播放器外壳。
 - `rpg-game://` 受限本地资源协议。
 - MV/MZ 项目标志识别。

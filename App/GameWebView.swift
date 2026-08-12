@@ -55,7 +55,12 @@ struct GameWebView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             Task { @MainActor in
-                self.model?.status = "测试游戏已加载。请使用屏幕按键移动方块。"
+                guard let model = self.model else { return }
+                if model.game == nil {
+                    model.status = "测试游戏已加载。请使用屏幕按键移动方块。"
+                } else {
+                    model.status = "\(model.gameName) 已加载。"
+                }
                 self.model?.errorMessage = nil
             }
         }
