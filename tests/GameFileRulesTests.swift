@@ -181,6 +181,23 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(baseURL.host, "127.0.0.1")
     }
 
+    func testHTTPNavigationDiagnosticTreatsMainDocument404AsLoadFailure() {
+        let diagnostic = GameHTTPNavigationDiagnostic.evaluate(
+            statusCode: 404,
+            path: "/games/fixture/index.html"
+        )
+
+        XCTAssertEqual(diagnostic?.status, "加载失败")
+        XCTAssertEqual(
+            diagnostic?.message,
+            "资源加载失败：HTTP 404 /games/fixture/index.html"
+        )
+    }
+
+    func testHTTPNavigationDiagnosticAllowsSuccessfulResponse() {
+        XCTAssertNil(GameHTTPNavigationDiagnostic.evaluate(statusCode: 200, path: "/index.html"))
+    }
+
     func testFindsNestedMZGameRoot() throws {
         let fixture = try TemporaryGameFixture()
         defer { fixture.remove() }
