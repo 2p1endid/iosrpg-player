@@ -29,6 +29,7 @@ targets:
         buildPhase: resources
     dependencies:
       - package: ZIPFoundation
+      - package: GCDWebServer
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.iosrpgplayer
@@ -50,6 +51,7 @@ targets:
     dependencies:
       - target: IOSRPGPlayer
       - package: ZIPFoundation
+      - package: GCDWebServer
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.iosrpgplayer.tests
@@ -61,3 +63,6 @@ packages:
   ZIPFoundation:
     url: https://github.com/weichsel/ZIPFoundation.git
     from: 0.9.19
+  GCDWebServer:
+    url: https://github.com/swisspol/GCDWebServer.git
+    from: 3.5.4
