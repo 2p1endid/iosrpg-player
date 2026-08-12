@@ -21,6 +21,7 @@ targets:
       - path: shared/GameResourceResolver.swift
       - path: shared/ProgressFileCopier.swift
       - path: shared/GameImportPickerState.swift
+      - path: shared/LocalGameHTTPRoute.swift
       - path: Resources/TestGame
         type: folder
         buildPhase: resources
