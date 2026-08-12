@@ -255,6 +255,28 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: game.containerURL.path))
     }
 
+    func testImportedGameRepairsStaleRootMetadataByFindingNestedWWW() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("Games/11111111-1111-1111-1111-111111111111/Game/www/index.html")
+        try fixture.write("Games/11111111-1111-1111-1111-111111111111/Game/www/data/System.json")
+        try fixture.write("Games/11111111-1111-1111-1111-111111111111/Game/www/js/rpg_core.js")
+        try fixture.write("Games/11111111-1111-1111-1111-111111111111/Game/www/js/rpg_managers.js")
+        let game = ImportedGame(
+            id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!,
+            name: "www",
+            engine: .mv,
+            importedAt: Date(),
+            relativeGameRoot: "Game",
+            storageRoot: fixture.root
+        )
+
+        let repairedRoot = try game.resolvedGameRootURL()
+
+        XCTAssertEqual(repairedRoot.lastPathComponent.lowercased(), "www")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: repairedRoot.appendingPathComponent("index.html").path))
+    }
+
     func testLibraryImportsNestedMVProjectFromZIP() async throws {
         let fixture = try TemporaryGameFixture()
         defer { fixture.remove() }
