@@ -11,6 +11,18 @@ struct GameWebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let userContentController = WKUserContentController()
         userContentController.add(context.coordinator, name: "gameBridge")
+        userContentController.addUserScript(WKUserScript(
+            source: """
+            window.addEventListener('error', function(event) {
+              window.webkit.messageHandlers.gameBridge.postMessage('JS错误: ' + (event.message || '未知错误'));
+            });
+            window.addEventListener('unhandledrejection', function(event) {
+              window.webkit.messageHandlers.gameBridge.postMessage('Promise错误: ' + String(event.reason || '未知错误'));
+            });
+            """,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false
+        ))
 
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = userContentController
@@ -63,6 +75,16 @@ struct GameWebView: UIViewRepresentable {
                 }
                 self.model?.errorMessage = nil
             }
+        }
+
+        func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse) async -> WKNavigationResponsePolicy {
+            guard let response = navigationResponse.response as? HTTPURLResponse else { return .allow }
+            if response.statusCode >= 400 {
+                Task { @MainActor in
+                    self.model?.errorMessage = "资源加载失败：HTTP \(response.statusCode) \(response.url?.path ?? "")"
+                }
+            }
+            return .allow
         }
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

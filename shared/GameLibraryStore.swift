@@ -95,9 +95,9 @@ final class GameLibraryStore: ObservableObject {
         if let storageRoot {
             self.storageRoot = storageRoot.standardizedFileURL
         } else {
-            let support = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            let support = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
                 ?? fileManager.temporaryDirectory
-            self.storageRoot = support.appendingPathComponent("IOSRPGPlayer", isDirectory: true)
+            self.storageRoot = support
         }
         try? fileManager.createDirectory(at: self.storageRoot, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: gamesRoot, withIntermediateDirectories: true)
@@ -110,33 +110,7 @@ final class GameLibraryStore: ObservableObject {
             if hasSecurityScope { selectedFolder.stopAccessingSecurityScopedResource() }
         }
 
-        let inspected = try GameProjectInspector.inspect(folder: selectedFolder)
-        let id = UUID()
-        let container = gamesRoot.appendingPathComponent(id.uuidString, isDirectory: true)
-        let destination = container.appendingPathComponent("Game", isDirectory: true)
-
-        do {
-            try fileManager.createDirectory(at: container, withIntermediateDirectories: true)
-            try fileManager.copyItem(at: inspected.root, to: destination)
-        } catch {
-            try? fileManager.removeItem(at: container)
-            throw GameImportError.copyFailed
-        }
-
-        let displayName = inspected.root.deletingPathExtension().lastPathComponent
-        let game = ImportedGame(
-            id: id,
-            name: displayName.isEmpty ? "Imported Game" : displayName,
-            engine: inspected.engine,
-            importedAt: Date(),
-            relativeGameRoot: "Game",
-            storageRoot: storageRoot
-        )
-        games.append(game)
-        games.sort { $0.importedAt > $1.importedAt }
-        try persist()
-        operationMessage = "已导入 \(game.name)（\(game.engineLabel)）"
-        return game
+        return try await copyImportedProject(GameProjectInspector.inspect(folder: selectedFolder))
     }
 
     func importZIP(_ selectedArchive: URL) async throws -> ImportedGame {

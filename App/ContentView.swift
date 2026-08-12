@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @StateObject private var library = GameLibraryStore()
     @State private var isImportingFolder = false
+    @State private var isImportingZIP = false
     @State private var selectedGame: ImportedGame?
     @State private var importError: String?
 
@@ -26,10 +27,19 @@ struct ContentView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isImportingFolder = true
+                    Menu {
+                        Button {
+                            isImportingZIP = true
+                        } label: {
+                            Label("导入 ZIP", systemImage: "doc.zipper")
+                        }
+                        Button {
+                            isImportingFolder = true
+                        } label: {
+                            Label("导入文件夹", systemImage: "folder.badge.plus")
+                        }
                     } label: {
-                        Label("导入文件夹", systemImage: "folder.badge.plus")
+                        Label("导入游戏", systemImage: "plus")
                     }
                 }
             }
@@ -46,6 +56,23 @@ struct ContentView: View {
             Task {
                 do {
                     selectedGame = try await library.importFolder(folder)
+                } catch {
+                    importError = error.localizedDescription
+                }
+            }
+        }
+        .fileImporter(
+            isPresented: $isImportingZIP,
+            allowedContentTypes: [.zip],
+            allowsMultipleSelection: false
+        ) { result in
+            guard case let .success(urls) = result, let archive = urls.first else {
+                if case let .failure(error) = result { importError = error.localizedDescription }
+                return
+            }
+            Task {
+                do {
+                    selectedGame = try await library.importZIP(archive)
                 } catch {
                     importError = error.localizedDescription
                 }
@@ -68,10 +95,11 @@ struct ContentView: View {
         ContentUnavailableView {
             Label("还没有游戏", systemImage: "gamecontroller")
         } description: {
-            Text("从“文件”App 选择已经解压的 RPG Maker MV 或 MZ 项目文件夹。")
+            Text("导入 RPG Maker MV/MZ ZIP，或选择已经解压的项目文件夹。")
         } actions: {
-            Button("导入游戏文件夹") { isImportingFolder = true }
+            Button("导入 ZIP") { isImportingZIP = true }
                 .buttonStyle(.borderedProminent)
+            Button("导入文件夹") { isImportingFolder = true }
             NavigationLink("打开内置测试环境") {
                 GamePlayerScreen(game: nil)
             }
