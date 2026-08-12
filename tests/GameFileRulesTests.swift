@@ -41,4 +41,51 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(GameFileRules.mimeType(for: "audio/bgm/theme.ogg"), "audio/ogg")
         XCTAssertEqual(GameFileRules.mimeType(for: "unknown.bin"), "application/octet-stream")
     }
+
+    func testFindsNestedMZGameRoot() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("wrapper/index.html")
+        try fixture.write("wrapper/data/System.json")
+        try fixture.write("wrapper/js/rmmz_core.js")
+        try fixture.write("wrapper/js/rmmz_managers.js")
+
+        let project = try GameProjectInspector.inspect(folder: fixture.root)
+
+        XCTAssertEqual(project.engine, .mz)
+        XCTAssertEqual(project.root.lastPathComponent, "wrapper")
+    }
+
+    func testRejectsFolderWithoutSupportedGame() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("notes/readme.txt")
+
+        XCTAssertThrowsError(try GameProjectInspector.inspect(folder: fixture.root)) { error in
+            XCTAssertEqual(error as? GameImportError, .unsupportedProject)
+        }
+    }
+}
+
+private struct TemporaryGameFixture {
+    let root: URL
+
+    init() throws {
+        root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    }
+
+    func write(_ relativePath: String) throws {
+        let url = root.appendingPathComponent(relativePath)
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try Data("fixture".utf8).write(to: url)
+    }
+
+    func remove() {
+        try? FileManager.default.removeItem(at: root)
+    }
 }
