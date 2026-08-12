@@ -94,20 +94,23 @@ final class PlayerModel: ObservableObject {
     }
 
     func stop() {
+        releaseAllKeys()
         httpServer?.stop()
         httpServer = nil
         isLoading = false
     }
 
     func sendKey(_ key: VirtualGameKey, pressed: Bool) {
-        let type = pressed ? "keydown" : "keyup"
-        let escapedKey = key.javascriptKey.replacingOccurrences(of: "'", with: "\\'")
-        let script = "window.dispatchEvent(new KeyboardEvent('\(type)', {key:'\(escapedKey)', code:'\(escapedKey)', bubbles:true}));"
+        let script = VirtualInputScriptBuilder.script(for: key.mapping, pressed: pressed)
         webView?.evaluateJavaScript(script) { [weak self] _, error in
             if let error {
                 Task { @MainActor in self?.errorMessage = "发送按键失败：\(error.localizedDescription)" }
             }
         }
+    }
+
+    func releaseAllKeys() {
+        webView?.evaluateJavaScript(VirtualInputScriptBuilder.releaseAllScript())
     }
 
     func receiveGameMessage(_ message: String) {
@@ -180,13 +183,17 @@ enum VirtualGameKey: String, CaseIterable, Identifiable {
     }
 
     var javascriptKey: String {
+        mapping.key
+    }
+
+    var mapping: VirtualInputMapping {
         switch self {
-        case .up: return "ArrowUp"
-        case .down: return "ArrowDown"
-        case .left: return "ArrowLeft"
-        case .right: return "ArrowRight"
-        case .confirm: return "Enter"
-        case .cancel: return "Escape"
+        case .up: return .up
+        case .down: return .down
+        case .left: return .left
+        case .right: return .right
+        case .confirm: return .confirm
+        case .cancel: return .cancel
         }
     }
 }

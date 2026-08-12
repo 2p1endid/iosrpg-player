@@ -25,6 +25,8 @@ targets:
       - path: shared/GameHTTPNavigationDiagnostic.swift
       - path: shared/GameRuntimeDiagnostic.swift
       - path: shared/GameRuntimeDiagnosticFormatter.swift
+      - path: shared/VirtualInputMapping.swift
+      - path: shared/VirtualInputScriptBuilder.swift
       - path: Resources/TestGame
         type: folder
         buildPhase: resources
