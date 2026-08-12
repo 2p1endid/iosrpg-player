@@ -1,4 +1,5 @@
 import XCTest
+import ZIPFoundation
 @testable import IOSRPGPlayer
 
 @MainActor
@@ -116,6 +117,38 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertTrue(library.games.isEmpty)
         XCTAssertFalse(FileManager.default.fileExists(atPath: game.containerURL.path))
     }
+
+    func testLibraryImportsNestedMVProjectFromZIP() async throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("archive/Game/index.html")
+        try fixture.write("archive/Game/data/System.json")
+        try fixture.write("archive/Game/js/rpg_core.js")
+        try fixture.write("archive/Game/js/rpg_managers.js")
+        let archive = try fixture.makeZIP(from: "archive", named: "mv-game.zip")
+
+        let storage = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: storage) }
+        let library = GameLibraryStore(storageRoot: storage)
+
+        let game = try await library.importZIP(archive)
+
+        XCTAssertEqual(game.engine, .mv)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: game.gameRootURL.appendingPathComponent("index.html").path))
+    }
+
+    func testZIPExtractorRejectsPathTraversalEntry() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        let archive = try fixture.makeZIPWithTraversalEntry()
+        let destination = fixture.root.appendingPathComponent("extract", isDirectory: true)
+
+        XCTAssertThrowsError(try SafeZIPExtractor.extract(archive: archive, to: destination)) { error in
+            XCTAssertEqual(error as? GameImportError, .unsafeArchive)
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("escape.txt").path))
+    }
 }
 
 private struct TemporaryGameFixture {
@@ -138,5 +171,24 @@ private struct TemporaryGameFixture {
 
     func remove() {
         try? FileManager.default.removeItem(at: root)
+    }
+
+    func makeZIP(from relativeDirectory: String, named name: String) throws -> URL {
+        let source = root.appendingPathComponent(relativeDirectory, isDirectory: true)
+        let archive = root.appendingPathComponent(name)
+        try FileManager.default.zipItem(at: source, to: archive, shouldKeepParent: true)
+        return archive
+    }
+
+    func makeZIPWithTraversalEntry() throws -> URL {
+        let archive = root.appendingPathComponent("unsafe.zip")
+        guard let zip = Archive(url: archive, accessMode: .create) else {
+            throw GameImportError.invalidArchive
+        }
+        try zip.addEntry(with: "../escape.txt", type: .file, uncompressedSize: 6) { position, size in
+            let data = Data("escape".utf8)
+            return data.subdata(in: Int(position)..<min(Int(position) + size, data.count))
+        }
+        return archive
     }
 }

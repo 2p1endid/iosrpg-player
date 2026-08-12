@@ -20,6 +20,8 @@ targets:
       - path: Resources/TestGame
         type: folder
         buildPhase: resources
+    dependencies:
+      - package: ZIPFoundation
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.iosrpgplayer
@@ -39,9 +41,15 @@ targets:
       - path: tests/GameFileRulesTests.swift
     dependencies:
       - target: IOSRPGPlayer
+      - package: ZIPFoundation
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.iosrpgplayer.tests
         GENERATE_INFOPLIST_FILE: YES
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/IOSRPGPlayer.app/IOSRPGPlayer"
         BUNDLE_LOADER: "$(TEST_HOST)"
+
+packages:
+  ZIPFoundation:
+    url: https://github.com/weichsel/ZIPFoundation.git
+    from: 0.9.19
