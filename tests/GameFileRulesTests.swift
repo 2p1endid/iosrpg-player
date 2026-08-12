@@ -178,6 +178,44 @@ final class GameFileRulesTests: XCTestCase {
         }
         XCTAssertFalse(FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("escape.txt").path))
     }
+
+    func testFolderCopierReportsMonotonicProgress() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("source/a.txt")
+        try fixture.write("source/nested/b.txt")
+        let destination = fixture.root.appendingPathComponent("copied", isDirectory: true)
+        var progressValues: [Double] = []
+
+        try ProgressFileCopier.copyDirectory(
+            from: fixture.root.appendingPathComponent("source", isDirectory: true),
+            to: destination,
+            progress: { progressValues.append($0) }
+        )
+
+        XCTAssertEqual(progressValues.last, 1, accuracy: 0.0001)
+        XCTAssertEqual(progressValues, progressValues.sorted())
+        XCTAssertTrue(FileManager.default.fileExists(atPath: destination.appendingPathComponent("nested/b.txt").path))
+    }
+
+    func testZIPExtractorReportsCompletionProgress() throws {
+        let fixture = try TemporaryGameFixture()
+        defer { fixture.remove() }
+        try fixture.write("archive/a.txt")
+        try fixture.write("archive/b.txt")
+        let archive = try fixture.makeZIP(from: "archive", named: "progress.zip")
+        let destination = fixture.root.appendingPathComponent("unzipped", isDirectory: true)
+        var progressValues: [Double] = []
+
+        try SafeZIPExtractor.extract(
+            archive: archive,
+            to: destination,
+            progress: { progressValues.append($0) }
+        )
+
+        XCTAssertEqual(progressValues.last, 1, accuracy: 0.0001)
+        XCTAssertEqual(progressValues, progressValues.sorted())
+    }
 }
 
 private struct TemporaryGameFixture {
