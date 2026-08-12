@@ -115,6 +115,27 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertTrue(patched.contains("TilemapPluginManager.parameters"))
     }
 
+    func testCompatibilityPatcherReplacesClassicScriptImportMetaFallback() throws {
+        let source = """
+        function pinoWebpackAbsolutePath(p) {
+          try { return require('path').join(p); }
+          catch(e) {
+            const f = new Function('p', 'return new URL(p, import.meta.url).pathname');
+            return f(p)
+          }
+        }
+        """
+        let patchedData = GameRuntimeCompatibilityPatcher.patch(
+            Data(source.utf8),
+            relativePath: "js/libs/logger.js"
+        )
+        let patched = try XCTUnwrap(String(data: patchedData, encoding: .utf8))
+
+        XCTAssertFalse(patched.contains("import.meta"))
+        XCTAssertTrue(patched.contains("document.currentScript"))
+        XCTAssertTrue(patched.contains("document.baseURI"))
+    }
+
     func testCompatibilityPatcherLeavesOtherScriptsUntouched() {
         let data = Data("var PluginManager = realManager;".utf8)
         XCTAssertEqual(
