@@ -56,6 +56,34 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(diagnostic.stack, "stack")
     }
 
+    func testVirtualInputMappingsMatchRPGMakerKeys() {
+        XCTAssertEqual(VirtualInputMapping.up.keyCode, 38)
+        XCTAssertEqual(VirtualInputMapping.up.rpgAction, "up")
+        XCTAssertEqual(VirtualInputMapping.confirm.key, "Enter")
+        XCTAssertEqual(VirtualInputMapping.confirm.rpgAction, "ok")
+        XCTAssertEqual(VirtualInputMapping.cancel.keyCode, 27)
+        XCTAssertEqual(VirtualInputMapping.cancel.rpgAction, "escape")
+    }
+
+    func testVirtualInputScriptUpdatesDOMAndRPGMakerState() {
+        let script = VirtualInputScriptBuilder.script(for: .up, pressed: true)
+
+        XCTAssertTrue(script.contains("Input._currentState"))
+        XCTAssertTrue(script.contains("'up'"))
+        XCTAssertTrue(script.contains("keyCode"))
+        XCTAssertTrue(script.contains("which"))
+        XCTAssertTrue(script.contains("window.dispatchEvent"))
+        XCTAssertTrue(script.contains("document.dispatchEvent"))
+    }
+
+    func testReleaseAllVirtualInputsClearsEveryRPGMakerAction() {
+        let script = VirtualInputScriptBuilder.releaseAllScript()
+
+        for action in ["up", "down", "left", "right", "ok", "escape"] {
+            XCTAssertTrue(script.contains("'\(action)'"))
+        }
+    }
+
     func testImportPickerSelectionKeepsSourceUntilCompletion() {
         var state = GameImportPickerState()
         state.present(.zip)
