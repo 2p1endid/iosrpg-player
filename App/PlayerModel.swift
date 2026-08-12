@@ -3,16 +3,27 @@ import WebKit
 
 @MainActor
 final class PlayerModel: ObservableObject {
-    @Published var status = "正在准备内置 MZ 兼容测试游戏…"
+    @Published var status: String
     @Published var errorMessage: String?
     @Published var lastGameMessage = "尚未收到游戏消息"
 
+    let game: ImportedGame?
+    let gameName: String
     let resourceHandler: GameResourceSchemeHandler
     weak var webView: WKWebView?
 
-    init() {
-        let root = Bundle.main.resourceURL?.appendingPathComponent("TestGame", isDirectory: true)
-        resourceHandler = GameResourceSchemeHandler(gameRoot: root)
+    init(game: ImportedGame? = nil) {
+        self.game = game
+        if let game {
+            gameName = game.name
+            status = "正在准备 \(game.name)…"
+            resourceHandler = GameResourceSchemeHandler(gameRoot: game.gameRootURL)
+        } else {
+            gameName = "内置测试游戏"
+            status = "正在准备内置 MZ 兼容测试游戏…"
+            let root = Bundle.main.resourceURL?.appendingPathComponent("TestGame", isDirectory: true)
+            resourceHandler = GameResourceSchemeHandler(gameRoot: root)
+        }
     }
 
     func attach(webView: WKWebView) {
@@ -21,12 +32,13 @@ final class PlayerModel: ObservableObject {
 
     func loadGame() {
         guard resourceHandler.gameRoot != nil else {
-            errorMessage = "应用包中缺少 TestGame 目录。"
+            errorMessage = "找不到游戏目录。"
             status = "无法启动"
             return
         }
-        status = "正在加载 rpg-game://builtin/index.html"
-        webView?.load(URLRequest(url: URL(string: "rpg-game://builtin/index.html")!))
+        let host = game?.id.uuidString.lowercased() ?? "builtin"
+        status = "正在加载 \(gameName)…"
+        webView?.load(URLRequest(url: URL(string: "rpg-game://\(host)/index.html")!))
     }
 
     func sendKey(_ key: VirtualGameKey, pressed: Bool) {

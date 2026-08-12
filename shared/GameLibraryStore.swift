@@ -1,6 +1,6 @@
 import Foundation
 
-struct ImportedGame: Codable, Equatable, Identifiable {
+struct ImportedGame: Codable, Equatable, Hashable, Identifiable {
     let id: UUID
     var name: String
     let engine: RPGMakerWebEngine
@@ -71,6 +71,10 @@ struct ImportedGame: Codable, Equatable, Identifiable {
         lhs.engine == rhs.engine &&
         lhs.importedAt == rhs.importedAt &&
         lhs.relativeGameRoot == rhs.relativeGameRoot
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 
