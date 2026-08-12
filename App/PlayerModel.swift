@@ -9,20 +9,22 @@ final class PlayerModel: ObservableObject {
 
     let game: ImportedGame?
     let gameName: String
-    let resourceHandler: GameResourceSchemeHandler
     weak var webView: WKWebView?
+
+    private let gameRoot: URL?
+    private var httpServer: LocalGameHTTPServer?
+    private var isLoading = false
 
     init(game: ImportedGame? = nil) {
         self.game = game
         if let game {
             gameName = game.name
             status = "正在准备 \(game.name)…"
-            resourceHandler = GameResourceSchemeHandler(gameRoot: game.gameRootURL)
+            gameRoot = game.gameRootURL
         } else {
             gameName = "内置测试游戏"
             status = "正在准备内置 MZ 兼容测试游戏…"
-            let root = Bundle.main.resourceURL?.appendingPathComponent("TestGame", isDirectory: true)
-            resourceHandler = GameResourceSchemeHandler(gameRoot: root)
+            gameRoot = Bundle.main.resourceURL?.appendingPathComponent("TestGame", isDirectory: true)
         }
     }
 
@@ -31,14 +33,53 @@ final class PlayerModel: ObservableObject {
     }
 
     func loadGame() {
-        guard resourceHandler.gameRoot != nil else {
+        guard !isLoading else { return }
+        guard let gameRoot else {
             errorMessage = "找不到游戏目录。"
             status = "无法启动"
             return
         }
-        let host = game?.id.uuidString.lowercased() ?? "builtin"
-        status = "正在加载 \(gameName)…"
-        webView?.load(URLRequest(url: URL(string: "rpg-game://\(host)/index.html")!))
+        isLoading = true
+        errorMessage = nil
+        status = "正在启动本地游戏服务器…"
+        let gameID = game?.id.uuidString.lowercased() ?? "builtin"
+        let server = LocalGameHTTPServer(gameRoot: gameRoot, gameID: gameID)
+        httpServer?.stop()
+        httpServer = server
+
+        Task {
+            do {
+                let baseURL = try await server.start()
+                guard self.httpServer === server else { return }
+                self.status = "正在加载 \(self.gameName)…"
+                self.webView?.load(URLRequest(url: baseURL.appendingPathComponent("index.html")))
+            } catch {
+                guard self.httpServer === server else { return }
+                self.errorMessage = "本地游戏服务器启动失败：\(error.localizedDescription)"
+                self.status = "无法启动"
+                self.isLoading = false
+            }
+        }
+    }
+
+    func didFinishLoading() {
+        isLoading = false
+    }
+
+    func reloadGame() {
+        guard let webView, let currentURL = webView.url else {
+            loadGame()
+            return
+        }
+        errorMessage = nil
+        status = "正在重新加载 \(gameName)…"
+        webView.load(URLRequest(url: currentURL))
+    }
+
+    func stop() {
+        httpServer?.stop()
+        httpServer = nil
+        isLoading = false
     }
 
     func sendKey(_ key: VirtualGameKey, pressed: Bool) {
@@ -54,6 +95,9 @@ final class PlayerModel: ObservableObject {
 
     func receiveGameMessage(_ message: String) {
         lastGameMessage = message
+        if message.hasPrefix("JS错误:") || message.hasPrefix("Promise错误:") || message.hasPrefix("控制台错误:") {
+            errorMessage = message
+        }
     }
 }
 

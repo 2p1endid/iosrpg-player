@@ -19,6 +19,14 @@ struct GameWebView: UIViewRepresentable {
             window.addEventListener('unhandledrejection', function(event) {
               window.webkit.messageHandlers.gameBridge.postMessage('Promise错误: ' + String(event.reason || '未知错误'));
             });
+            (function() {
+              var originalError = console.error;
+              console.error = function() {
+                var text = Array.prototype.map.call(arguments, String).join(' ');
+                window.webkit.messageHandlers.gameBridge.postMessage('控制台错误: ' + text);
+                return originalError.apply(console, arguments);
+              };
+            })();
             """,
             injectionTime: .atDocumentStart,
             forMainFrameOnly: false
@@ -28,8 +36,6 @@ struct GameWebView: UIViewRepresentable {
         configuration.userContentController = userContentController
         configuration.websiteDataStore = .default()
         configuration.preferences.isElementFullscreenEnabled = true
-        configuration.setURLSchemeHandler(model.resourceHandler, forURLScheme: "rpg-game")
-
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
@@ -73,6 +79,7 @@ struct GameWebView: UIViewRepresentable {
                 } else {
                     model.status = "\(model.gameName) 已加载。"
                 }
+                model.didFinishLoading()
                 self.model?.errorMessage = nil
             }
         }

@@ -10,10 +10,11 @@
 - 自动查找最多四层嵌套目录中的游戏根目录
 - 将游戏复制到 App 的 Documents/Games 沙盒并持久化游戏库
 - 从游戏库启动、重新加载和删除游戏
-- 每个游戏通过受限 `rpg-game://<游戏UUID>/` 地址加载本地资源
+- 每个游戏通过 App 内嵌的随机端口 `http://127.0.0.1:<port>/games/<UUID>/index.html` 加载
+- 本地服务器只监听回环地址并只接受 GET/HEAD，资源路径仍限制在当前游戏根目录
 
 - SwiftUI + WKWebView 播放器外壳。
-- `rpg-game://` 受限本地资源协议。
+- localhost HTTP 运行层，兼容 MV/MZ 的 XHR、相对 URL、加密资源和空图片 URL 浏览器语义。
 - MV/MZ 项目标志识别。
 - 路径穿越防护和 MIME 类型映射。
 - Swift 虚拟按键到 JavaScript `KeyboardEvent`。

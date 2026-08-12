@@ -168,6 +168,7 @@ struct GamePlayerScreen: View {
         }
         .navigationBarBackButtonHidden(true)
         .preferredColorScheme(.dark)
+        .onDisappear { model.stop() }
     }
 
     private var header: some View {
@@ -176,7 +177,7 @@ struct GamePlayerScreen: View {
                 Button { dismiss() } label: { Label("游戏库", systemImage: "chevron.left") }
                 Text(model.gameName).font(.headline).lineLimit(1)
                 Spacer()
-                Button("重新加载") { model.loadGame() }.buttonStyle(.bordered)
+                Button("重新加载") { model.reloadGame() }.buttonStyle(.bordered)
             }
             Text(model.status).font(.caption).foregroundStyle(.secondary)
             Text("JS: \(model.lastGameMessage)")
