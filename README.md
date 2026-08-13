@@ -4,7 +4,7 @@
 
 ## 中文
 
-iOS RPG Player 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地游戏播放器雏形。它允许用户从“文件”App导入自己合法持有的、已经部署为Web项目的RPG Maker MV/MZ游戏，并通过应用内的本地服务器和WKWebView运行。
+iOS RPG Player 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地游戏播放器。它允许用户从“文件”App导入自己合法持有的、已经部署为Web项目的RPG Maker MV/MZ游戏，并通过应用内的本地服务器和WKWebView运行。
 
 > 本项目不包含、提供或分发RPG Maker运行时、商业游戏、DLC、Mod或任何第三方游戏资源。用户应确保自己有权使用所导入的内容。
 
