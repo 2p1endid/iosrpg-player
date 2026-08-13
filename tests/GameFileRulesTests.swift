@@ -141,6 +141,25 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertGreaterThan(layout.b.x, layout.y.x)
     }
 
+    func testDpadAndFaceButtonsUseSameEdgeSpacing() {
+        let diameter: CGFloat = 64
+        let spacing: CGFloat = 3
+        let canvas = GameControllerLayout.faceButtonCanvasSize(
+            buttonDiameter: diameter,
+            edgeSpacing: spacing
+        )
+        let layout = GameControllerLayout.faceButtons(
+            in: canvas,
+            buttonDiameter: diameter,
+            edgeSpacing: spacing
+        )
+
+        let horizontalEdgeGap = layout.b.x - layout.y.x - diameter
+        let verticalEdgeGap = layout.a.y - layout.x.y - diameter
+        XCTAssertEqual(horizontalEdgeGap, spacing, accuracy: 0.001)
+        XCTAssertEqual(verticalEdgeGap, spacing, accuracy: 0.001)
+    }
+
     func testXboxFaceButtonsRemainInsideControllerBounds() {
         let size = CGSize(width: 180, height: 180)
         let layout = GameControllerLayout.faceButtons(in: size)
