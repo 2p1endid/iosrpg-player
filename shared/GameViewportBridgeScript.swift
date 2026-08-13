@@ -28,7 +28,10 @@ enum GameViewportBridgeScript {
 
         if (graphics && graphics._stretchEnabled !== true) {
           graphics._stretchEnabled = true;
-          if (typeof graphics._updateAllElements === 'function') graphics._updateAllElements();
+          if (graphics._errorPrinter && graphics._canvas && graphics._upperCanvas &&
+              typeof graphics._updateAllElements === 'function') {
+            graphics._updateAllElements();
+          }
         }
 
         var signature = [logicalWidth, logicalHeight, viewportWidth, viewportHeight, cssWidth, cssHeight, scale].join(':');
