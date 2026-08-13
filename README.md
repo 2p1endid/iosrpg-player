@@ -12,12 +12,9 @@ iOS RPG Player 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地�
 - 最低系统：iOS/iPadOS 17.0
 - 许可证：[MIT License](LICENSE)
 
-
 ### 支持范围与限制
 
 当前重点支持RPG Maker MV/MZ的Web部署项目。兼容性取决于游戏自身使用的插件、媒体格式和桌面专用能力。
-
-
 
 ### 安装说明
 
@@ -75,54 +72,26 @@ Apple的SwiftUI、UIKit、WebKit、Network、Foundation、CoreGraphics、Uniform
 
 ## English
 
-iOS RPG Player is an open-source prototype local player for RPG Maker MV/MZ games on iPhone and iPad. It lets users import legally obtained RPG Maker MV/MZ games that have been deployed as web projects from the Files app, then runs them through an embedded local server and WKWebView.
+iOS RPG Player is an open-source prototype local player for RPG Maker MV/MZ on iPhone and iPad. It allows users to import legally owned RPG Maker MV/MZ games that have been deployed as web projects from the Files app and run them through the app's local server and WKWebView.
 
-> This project does not include, provide, or distribute RPG Maker runtimes, commercial games, DLC, mods, or third-party game assets. Users are responsible for ensuring that they have the right to use all imported content.
+> This project does not include, provide, or distribute RPG Maker runtimes, commercial games, DLC, mods, or any third-party game assets. Users must ensure that they have the right to use the content they import.
 
-### Current Version
-
-- Public version: `0.1.0`
-- Internal build number: `14`
+- Current version: `0.1.0`
 - Minimum OS: iOS/iPadOS 17.0
-- Author: [2p1endid](https://github.com/2p1endid)
-- Repository: <https://github.com/2p1endid/iosrpg-player>
 - License: [MIT License](LICENSE)
-
-### Features
-
-- Imports RPG Maker MV/MZ ZIP archives or extracted folders from the iOS Files app;
-- Finds game roots nested up to four directory levels deep;
-- Safely extracts ZIP archives while rejecting traversal, absolute paths, symbolic links, and oversized archives;
-- Stores games in the app sandbox and maintains a persistent local library;
-- Runs each game through an embedded HTTP server bound only to `127.0.0.1` on a random port;
-- Supports common MV/MZ XHR, relative URL, encrypted-resource, and browser loading semantics;
-- Provides a fullscreen WKWebView with aspect-preserving logical-resolution scaling;
-- Includes a hideable touch controller with a D-pad and A/B/X/Y buttons;
-- Sends input through both RPG Maker logical state and DOM keyboard events;
-- Captures structured JavaScript, Promise, console, HTTP, and bridge diagnostics;
-- Applies narrowly scoped browser fallbacks for selected NW.js-only plugins;
-- Shows version, build, author, GitHub, license, and third-party projects in a bilingual About screen.
 
 ### Scope and Limitations
 
-The current focus is RPG Maker MV/MZ web deployment projects. Compatibility depends on each game's plugins, media formats, and desktop-only assumptions.
-
-The project does not currently promise support for:
-
-- RPG Maker XP, VX, or VX Ace;
-- Non-web projects that require RTP;
-- RAR, 7z, or APK imports;
-- Features that require full Node.js, NW.js filesystem access, Steam APIs, or desktop native modules;
-- Distribution of unauthorized game assets, cracked content, or commercial DLC.
+The current focus is RPG Maker MV/MZ web deployment projects. Compatibility depends on the plugins, media formats, and desktop-only capabilities used by each game.
 
 ### Installation
 
-`IOSRPGPlayer-unsigned.ipa` in the Release is a genuinely unsigned device build:
+`IOSRPGPlayer-unsigned.ipa` in the Release is an unsigned device build:
 
 - It has no Apple developer certificate;
 - It has no provisioning profile;
 - It cannot be installed directly on a normal iPhone or iPad;
-- Users must re-sign it with their own legitimate Apple developer identity and a matching provisioning profile.
+- Users need to re-sign it with their own legitimate Apple developer identity and a matching provisioning profile.
 
 ### Building
 
@@ -140,7 +109,7 @@ Portable tests can be run on Windows:
 npm test
 ```
 
-See [BUILD_IPA.md](BUILD_IPA.md) for additional details.
+See [BUILD_IPA.md](BUILD_IPA.md) for more information.
 
 ### Other Open-Source Projects Used
 
@@ -161,7 +130,7 @@ See [BUILD_IPA.md](BUILD_IPA.md) for additional details.
 
 Apple's SwiftUI, UIKit, WebKit, Network, Foundation, CoreGraphics, UniformTypeIdentifiers, and XCTest are system SDK frameworks and are not distributed as third-party project dependencies.
 
-Third-party projects retain their respective copyrights and licenses. This repository's MIT License applies only to original code in this repository and does not replace third-party licenses.
+Third-party projects retain their respective copyrights and licenses. This project's MIT License applies only to original code in this repository and does not replace third-party licenses.
 
 ### License
 
