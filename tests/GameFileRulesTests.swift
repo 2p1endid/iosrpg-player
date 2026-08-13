@@ -74,6 +74,8 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertTrue(script.contains("which"))
         XCTAssertTrue(script.contains("window.dispatchEvent"))
         XCTAssertTrue(script.contains("document.dispatchEvent"))
+        XCTAssertTrue(script.contains("__iosRPGInputBridge"))
+        XCTAssertTrue(script.contains("setState"))
     }
 
     func testReleaseAllVirtualInputsClearsEveryRPGMakerAction() {
@@ -82,6 +84,28 @@ final class GameFileRulesTests: XCTestCase {
         for action in ["up", "down", "left", "right", "ok", "escape"] {
             XCTAssertTrue(script.contains("'\(action)'"))
         }
+        XCTAssertTrue(script.contains("releaseAll"))
+    }
+
+    func testBrowserCapabilityShimDefinesSafeRequireAndLoggerAlias() {
+        let script = GameBrowserCapabilityScript.source
+
+        XCTAssertTrue(script.contains("globalThis.require"))
+        XCTAssertTrue(script.contains("globalThis.logger"))
+        XCTAssertTrue(script.contains("existsSync"))
+        XCTAssertTrue(script.contains("readFileSync"))
+        XCTAssertTrue(script.contains("mainModule"))
+    }
+
+    func testPersistentInputBridgeMaintainsHeldState() {
+        let script = GameVirtualInputBridgeScript.source
+
+        XCTAssertTrue(script.contains("__iosRPGInputBridge"))
+        XCTAssertTrue(script.contains("held"))
+        XCTAssertTrue(script.contains("setState"))
+        XCTAssertTrue(script.contains("releaseAll"))
+        XCTAssertTrue(script.contains("requestAnimationFrame"))
+        XCTAssertTrue(script.contains("Input._currentState"))
     }
 
     func testGameViewportFitsSummerMemoriesCanvasWithoutDistortion() {
