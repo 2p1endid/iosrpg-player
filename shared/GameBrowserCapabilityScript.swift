@@ -11,7 +11,7 @@ enum GameBrowserCapabilityScript {
         logger.child = function() { return noopLogger(); };
         return logger;
       }
-      root.logger = root.logger || (root.Logger && root.Logger.createDefaultLogger
+      globalThis.logger = globalThis.logger || (root.Logger && root.Logger.createDefaultLogger
         ? root.Logger.createDefaultLogger('browser-compat') : noopLogger());
 
       if (typeof root.process !== 'object') {
@@ -37,7 +37,7 @@ enum GameBrowserCapabilityScript {
           writeFileSync: function() {}, mkdirSync: function() {}, readdirSync: function() { return []; }
         };
         var utilModule = { promisify: function(fn) { return function() { return Promise.reject(new Error('Node API unavailable')); }; } };
-        root.require = function(name) {
+        globalThis.require = function(name) {
           if (name === 'path' || name === 'node:path') return pathModule;
           if (name === 'fs' || name === 'node:fs') return fsModule;
           if (name === 'process') return root.process;
