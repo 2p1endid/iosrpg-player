@@ -128,6 +128,32 @@ final class GameFileRulesTests: XCTestCase {
         )
     }
 
+    func testXboxFaceButtonsUseEqualSymmetricDiamondGeometry() {
+        let layout = GameControllerLayout.faceButtons(in: CGSize(width: 220, height: 220))
+
+        XCTAssertGreaterThanOrEqual(layout.buttonDiameter, 48)
+        XCTAssertLessThanOrEqual(layout.buttonDiameter, 72)
+        XCTAssertEqual(layout.x.y, layout.b.y, accuracy: 0.001)
+        XCTAssertEqual(layout.y.x, layout.a.x, accuracy: 0.001)
+        XCTAssertLessThan(layout.y.y, layout.x.y)
+        XCTAssertGreaterThan(layout.a.y, layout.x.y)
+        XCTAssertLessThan(layout.x.x, layout.y.x)
+        XCTAssertGreaterThan(layout.b.x, layout.y.x)
+    }
+
+    func testXboxFaceButtonsRemainInsideControllerBounds() {
+        let size = CGSize(width: 180, height: 180)
+        let layout = GameControllerLayout.faceButtons(in: size)
+        let radius = layout.buttonDiameter / 2
+
+        for point in [layout.a, layout.b, layout.x, layout.y] {
+            XCTAssertGreaterThanOrEqual(point.x - radius, 0)
+            XCTAssertGreaterThanOrEqual(point.y - radius, 0)
+            XCTAssertLessThanOrEqual(point.x + radius, size.width)
+            XCTAssertLessThanOrEqual(point.y + radius, size.height)
+        }
+    }
+
     func testCompatibilityPatcherLeavesFunctionScopedTilemapManagerUntouched() {
         let source = "function requireRpgMaker(){ var PluginManager={parameters:function(){}}; PluginManager.parameters(); }"
         let data = Data(source.utf8)
