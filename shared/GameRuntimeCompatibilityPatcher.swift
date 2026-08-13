@@ -38,7 +38,7 @@ enum GameRuntimeCompatibilityPatcher {
         };
         return logger;
       }
-      root.Logger = {
+      globalThis.Logger = {
         defaultLogPath: '',
         createDefaultLogger: function(name, isDebug) {
           return createLogger(name || 'game', !!isDebug);
@@ -49,7 +49,7 @@ enum GameRuntimeCompatibilityPatcher {
 
     private static let browserModManagerScript = #"""
     (function(root) {
-      root.ModManager = {
+      globalThis.ModManager = {
         getModsList: function() { return Promise.resolve([]); },
         loadMods: function() { return Promise.resolve(); },
         pathResolver: {}
