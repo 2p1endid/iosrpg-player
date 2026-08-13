@@ -209,6 +209,17 @@ final class GameFileRulesTests: XCTestCase {
         )
     }
 
+    func testViewportBridgeReportsLogicalDeviceAndCSSDimensions() {
+        let script = GameViewportBridgeScript.source
+        XCTAssertTrue(script.contains("logicalWidth"))
+        XCTAssertTrue(script.contains("viewportWidth"))
+        XCTAssertTrue(script.contains("cssWidth"))
+        XCTAssertTrue(script.contains("devicePixelRatio"))
+        XCTAssertTrue(script.contains("graphics._stretchEnabled"))
+        XCTAssertTrue(script.contains("ResizeObserver"))
+        XCTAssertTrue(script.contains("orientationchange"))
+    }
+
     func testCompatibilityPatcherLeavesFunctionScopedTilemapManagerUntouched() {
         let source = "function requireRpgMaker(){ var PluginManager={parameters:function(){}}; PluginManager.parameters(); }"
         let data = Data(source.utf8)

@@ -162,13 +162,12 @@ struct GamePlayerScreen: View {
         ZStack {
             Color.black.ignoresSafeArea()
             GeometryReader { proxy in
-                let viewport = GameViewportSizing.fit(
-                    content: model.gameCanvasSize,
-                    container: proxy.size
-                )
                 ZStack {
                     GameWebView(model: model)
-                        .frame(width: viewport.width, height: viewport.height)
+                        .frame(
+                            width: GameViewportSizing.webViewSize(container: proxy.size).width,
+                            height: GameViewportSizing.webViewSize(container: proxy.size).height
+                        )
                         .background(Color.black)
                         .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
 

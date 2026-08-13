@@ -22,6 +22,11 @@ struct GameWebView: UIViewRepresentable {
             forMainFrameOnly: true
         ))
         userContentController.addUserScript(WKUserScript(
+            source: GameViewportBridgeScript.source,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        ))
+        userContentController.addUserScript(WKUserScript(
             source: Self.diagnosticScript,
             injectionTime: .atDocumentStart,
             forMainFrameOnly: false
@@ -130,32 +135,6 @@ struct GameWebView: UIViewRepresentable {
                     model.status = "\(model.gameName) 已加载。"
                 }
                 model.didFinishLoading()
-                webView.evaluateJavaScript("""
-                (function installViewportObserver(){
-                  if (window.__iosRPGViewportObserverInstalled) return;
-                  window.__iosRPGViewportObserverInstalled = true;
-                  var lastWidth = 0, lastHeight = 0, observedCanvas = null, resizeObserver = null;
-                  function report() {
-                    var canvas = document.querySelector('canvas');
-                    var width = (typeof Graphics !== 'undefined' && Graphics.width) || (canvas && canvas.width) || 0;
-                    var height = (typeof Graphics !== 'undefined' && Graphics.height) || (canvas && canvas.height) || 0;
-                    if (width > 0 && height > 0 && (width !== lastWidth || height !== lastHeight)) {
-                      lastWidth = width; lastHeight = height;
-                      window.webkit.messageHandlers.gameBridge.postMessage({category:'viewport', severity:'info', message:'viewport', width:width, height:height, pageURL:location.href});
-                    }
-                    if (canvas !== observedCanvas) {
-                      if (resizeObserver) resizeObserver.disconnect();
-                      observedCanvas = canvas;
-                      if (canvas && typeof ResizeObserver !== 'undefined') {
-                        resizeObserver = new ResizeObserver(report);
-                        resizeObserver.observe(canvas);
-                      }
-                    }
-                    requestAnimationFrame(report);
-                  }
-                  report();
-                })();
-                """)
             }
         }
 
