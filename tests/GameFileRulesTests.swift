@@ -220,6 +220,14 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertTrue(script.contains("orientationchange"))
     }
 
+    func testViewportBridgeDoesNotUpdateGraphicsBeforeElementsExist() {
+        let script = GameViewportBridgeScript.source
+        XCTAssertTrue(script.contains("graphics._errorPrinter"))
+        XCTAssertTrue(script.contains("graphics._canvas"))
+        XCTAssertTrue(script.contains("graphics._upperCanvas"))
+        XCTAssertFalse(script.contains("if (typeof graphics._updateAllElements === 'function') graphics._updateAllElements();"))
+    }
+
     func testCompatibilityPatcherLeavesFunctionScopedTilemapManagerUntouched() {
         let source = "function requireRpgMaker(){ var PluginManager={parameters:function(){}}; PluginManager.parameters(); }"
         let data = Data(source.utf8)
