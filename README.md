@@ -8,45 +8,20 @@ iOS RPG Player 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地�
 
 > 本项目不包含、提供或分发RPG Maker运行时、商业游戏、DLC、Mod或任何第三方游戏资源。用户应确保自己有权使用所导入的内容。
 
-### 当前版本
-
-- 对外版本：`0.1.0`
-- 内部构建号：`14`
+- 当前版本：`0.1.0`
 - 最低系统：iOS/iPadOS 17.0
-- 作者：[2p1endid](https://github.com/2p1endid)
-- 项目主页：<https://github.com/2p1endid/iosrpg-player>
 - 许可证：[MIT License](LICENSE)
 
-### 主要功能
-
-- 从iOS“文件”App导入RPG Maker MV/MZ ZIP或已解压文件夹；
-- 自动识别最多四层嵌套目录中的游戏根目录；
-- 安全解压ZIP，拒绝路径穿越、绝对路径、符号链接和超限压缩包；
-- 将游戏保存在应用沙盒中并维护本地游戏库；
-- 通过仅监听`127.0.0.1`随机端口的内嵌HTTP服务器运行游戏；
-- 支持MV/MZ常见XHR、相对URL、加密资源和浏览器加载语义；
-- 全屏WKWebView与按游戏逻辑分辨率等比缩放；
-- 可隐藏的触屏虚拟手柄，包含方向键和A/B/X/Y；
-- RPG Maker逻辑输入与DOM键盘事件双通道输入桥；
-- JavaScript、Promise、console、HTTP与桥接错误的结构化诊断；
-- 针对部分NW.js专用插件提供受限、按文件匹配的浏览器兼容回退；
-- 在“关于 / About”页面显示版本、构建号、作者、GitHub、许可证和第三方开源项目。
 
 ### 支持范围与限制
 
 当前重点支持RPG Maker MV/MZ的Web部署项目。兼容性取决于游戏自身使用的插件、媒体格式和桌面专用能力。
 
-当前不承诺支持：
 
-- RPG Maker XP、VX、VX Ace；
-- 需要RTP的非Web项目；
-- RAR、7z、APK；
-- 依赖完整Node.js、NW.js文件系统、Steam API或桌面原生模块的功能；
-- 未经授权的游戏资源、破解内容或商业DLC分发。
 
 ### 安装说明
 
-Release中的`IOSRPGPlayer-unsigned.ipa`是真正的未签名设备构建：
+Release中的`IOSRPGPlayer-unsigned.ipa`是未签名设备构建：
 
 - 没有Apple开发者证书；
 - 没有provisioning profile；
