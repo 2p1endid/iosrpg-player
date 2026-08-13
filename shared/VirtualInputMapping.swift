@@ -2,7 +2,7 @@ import Foundation
 
 struct VirtualInputMapping: Equatable, CaseIterable {
     enum Kind: String, CaseIterable {
-        case up, down, left, right, confirm, cancel
+        case up, down, left, right, confirm, cancel, x, y
     }
 
     let kind: Kind
@@ -17,8 +17,10 @@ struct VirtualInputMapping: Equatable, CaseIterable {
     static let right = VirtualInputMapping(kind: .right, key: "ArrowRight", code: "ArrowRight", keyCode: 39, rpgAction: "right")
     static let confirm = VirtualInputMapping(kind: .confirm, key: "Enter", code: "Enter", keyCode: 13, rpgAction: "ok")
     static let cancel = VirtualInputMapping(kind: .cancel, key: "Escape", code: "Escape", keyCode: 27, rpgAction: "escape")
+    static let x = VirtualInputMapping(kind: .x, key: "x", code: "KeyX", keyCode: 88, rpgAction: "menu")
+    static let y = VirtualInputMapping(kind: .y, key: "Shift", code: "ShiftLeft", keyCode: 16, rpgAction: "shift")
 
-    static let allCases: [VirtualInputMapping] = [.up, .down, .left, .right, .confirm, .cancel]
+    static let allCases: [VirtualInputMapping] = [.up, .down, .left, .right, .confirm, .cancel, .x, .y]
 
     static func mapping(for kind: Kind) -> VirtualInputMapping {
         allCases.first { $0.kind == kind } ?? .confirm

@@ -188,7 +188,7 @@ final class PlayerModel: ObservableObject {
 }
 
 enum VirtualGameKey: String, CaseIterable, Identifiable {
-    case up, down, left, right, confirm, cancel
+    case up, down, left, right, confirm, cancel, x, y
 
     var id: String { rawValue }
 
@@ -200,6 +200,8 @@ enum VirtualGameKey: String, CaseIterable, Identifiable {
         case .right: return "→"
         case .confirm: return "A"
         case .cancel: return "B"
+        case .x: return "X"
+        case .y: return "Y"
         }
     }
 
@@ -215,6 +217,8 @@ enum VirtualGameKey: String, CaseIterable, Identifiable {
         case .right: return .right
         case .confirm: return .confirm
         case .cancel: return .cancel
+        case .x: return .x
+        case .y: return .y
         }
     }
 }

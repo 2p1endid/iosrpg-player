@@ -8,7 +8,8 @@ enum GameVirtualInputBridgeScript {
       var metadata = {
         up:{key:'ArrowUp',code:'ArrowUp',keyCode:38}, down:{key:'ArrowDown',code:'ArrowDown',keyCode:40},
         left:{key:'ArrowLeft',code:'ArrowLeft',keyCode:37}, right:{key:'ArrowRight',code:'ArrowRight',keyCode:39},
-        ok:{key:'Enter',code:'Enter',keyCode:13}, escape:{key:'Escape',code:'Escape',keyCode:27}
+        ok:{key:'Enter',code:'Enter',keyCode:13}, escape:{key:'Escape',code:'Escape',keyCode:27},
+        menu:{key:'x',code:'KeyX',keyCode:88}, shift:{key:'Shift',code:'ShiftLeft',keyCode:16}
       };
       function sync() {
         if (root.Input && root.Input._currentState) {

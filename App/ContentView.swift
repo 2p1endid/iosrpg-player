@@ -238,10 +238,15 @@ struct GamePlayerScreen: View {
                 directionPad(buttonSize: buttonSize)
                 Spacer(minLength: 24)
                 HStack(alignment: .bottom, spacing: buttonSize * 0.25) {
-                    GameButton(key: .cancel, color: .red, model: model, size: buttonSize)
-                        .offset(y: -buttonSize * 0.1)
-                    GameButton(key: .confirm, color: .blue, model: model, size: buttonSize)
-                        .offset(y: -buttonSize * 0.45)
+                    VStack(spacing: buttonSize * 0.16) {
+                        GameButton(key: .y, color: .yellow, model: model, size: buttonSize * 0.82)
+                        GameButton(key: .cancel, color: .red, model: model, size: buttonSize)
+                    }
+                    VStack(spacing: buttonSize * 0.16) {
+                        GameButton(key: .x, color: .green, model: model, size: buttonSize * 0.82)
+                        GameButton(key: .confirm, color: .blue, model: model, size: buttonSize)
+                    }
+                    .offset(y: -buttonSize * 0.35)
                 }
             }
             .padding(.horizontal, max(proxy.safeAreaInsets.leading, 18))

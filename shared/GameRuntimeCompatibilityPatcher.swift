@@ -18,13 +18,38 @@ enum GameRuntimeCompatibilityPatcher {
         }
         if relativePath.caseInsensitiveCompare("js/plugins/RemtairyMisc.js") == .orderedSame,
            let start = source.range(of: "DKTools.PreloadManager.checkForDLCs = function() {") {
-            let suffix = source[start.lowerBound...]
-            if let end = suffix.range(of: "\n};") {
+            let bodyStart = start.upperBound
+            if let closingBrace = matchingFunctionClosingBrace(in: source, startingAt: bodyStart),
+               let semicolon = source[closingBrace...].firstIndex(of: ";") {
                 let replacement = "DKTools.PreloadManager.checkForDLCs = function() { DLC_GYM = false; DLC_HAIR = false; DLC_PCUP = false;\n};"
-                source.replaceSubrange(start.lowerBound..<end.upperBound, with: replacement)
+                source.replaceSubrange(start.lowerBound...semicolon, with: replacement)
             }
         }
         return Data(source.utf8)
+    }
+
+    private static func matchingFunctionClosingBrace(in source: String, startingAt index: String.Index) -> String.Index? {
+        var depth = 1
+        var cursor = index
+        var quote: Character?
+        var escaped = false
+        while cursor < source.endIndex {
+            let character = source[cursor]
+            if let activeQuote = quote {
+                if escaped { escaped = false }
+                else if character == "\\" { escaped = true }
+                else if character == activeQuote { quote = nil }
+            } else if character == "\"" || character == "'" || character == "`" {
+                quote = character
+            } else if character == "{" {
+                depth += 1
+            } else if character == "}" {
+                depth -= 1
+                if depth == 0 { return cursor }
+            }
+            cursor = source.index(after: cursor)
+        }
+        return nil
     }
 
     private static let browserLoggerScript = #"""
