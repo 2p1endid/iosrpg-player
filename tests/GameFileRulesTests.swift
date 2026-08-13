@@ -129,8 +129,8 @@ final class GameFileRulesTests: XCTestCase {
         let patched = try XCTUnwrap(String(data: patchedData, encoding: .utf8))
 
         XCTAssertFalse(patched.contains("import.meta"))
-        XCTAssertTrue(patched.contains("document.currentScript"))
-        XCTAssertTrue(patched.contains("document.baseURI"))
+        XCTAssertTrue(patched.contains("globalThis.Logger"))
+        XCTAssertTrue(patched.contains("createDefaultLogger"))
     }
 
     func testCompatibilityPatcherProvidesBrowserLoggerWithoutNodeRequire() throws {
