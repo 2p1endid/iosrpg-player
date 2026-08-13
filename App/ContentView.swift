@@ -322,8 +322,16 @@ struct GamePlayerScreen: View {
     }
 
     private func faceButtons(buttonSize: CGFloat) -> some View {
-        let canvasSize = CGSize(width: buttonSize * 3.15, height: buttonSize * 3.15)
-        let layout = GameControllerLayout.faceButtons(in: canvasSize)
+        let edgeSpacing: CGFloat = 3
+        let canvasSize = GameControllerLayout.faceButtonCanvasSize(
+            buttonDiameter: buttonSize,
+            edgeSpacing: edgeSpacing
+        )
+        let layout = GameControllerLayout.faceButtons(
+            in: canvasSize,
+            buttonDiameter: buttonSize,
+            edgeSpacing: edgeSpacing
+        )
         return ZStack {
             GameButton(key: .confirm, color: .blue, model: model, size: layout.buttonDiameter)
                 .position(layout.a)
