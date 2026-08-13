@@ -303,7 +303,7 @@ struct GamePlayerScreen: View {
                 Spacer(minLength: 24)
                 faceButtons(buttonSize: buttonSize)
             }
-            .padding(.horizontal, max(proxy.safeAreaInsets.leading, 18))
+            .padding(.leading, max(proxy.safeAreaInsets.leading, 18))
             .padding(.trailing, max(proxy.safeAreaInsets.trailing, 18))
             .padding(.bottom, max(proxy.safeAreaInsets.bottom, 16))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
