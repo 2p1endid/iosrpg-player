@@ -29,6 +29,8 @@ targets:
       - path: shared/VirtualInputScriptBuilder.swift
       - path: shared/GameViewportSizing.swift
       - path: shared/GameRuntimeCompatibilityPatcher.swift
+      - path: shared/GameBrowserCapabilityScript.swift
+      - path: shared/GameVirtualInputBridgeScript.swift
       - path: Resources/TestGame
         type: folder
         buildPhase: resources
@@ -42,8 +44,8 @@ targets:
         PRODUCT_NAME: IOSRPGPlayer
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: App/Info.plist
-        MARKETING_VERSION: "0.3.2"
-        CURRENT_PROJECT_VERSION: "6"
+        MARKETING_VERSION: "0.3.3"
+        CURRENT_PROJECT_VERSION: "7"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
     scheme:

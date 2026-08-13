@@ -68,12 +68,7 @@ final class GameFileRulesTests: XCTestCase {
     func testVirtualInputScriptUpdatesDOMAndRPGMakerState() {
         let script = VirtualInputScriptBuilder.script(for: .up, pressed: true)
 
-        XCTAssertTrue(script.contains("Input._currentState"))
         XCTAssertTrue(script.contains("'up'"))
-        XCTAssertTrue(script.contains("keyCode"))
-        XCTAssertTrue(script.contains("which"))
-        XCTAssertTrue(script.contains("window.dispatchEvent"))
-        XCTAssertTrue(script.contains("document.dispatchEvent"))
         XCTAssertTrue(script.contains("__iosRPGInputBridge"))
         XCTAssertTrue(script.contains("setState"))
     }

@@ -12,6 +12,16 @@ struct GameWebView: UIViewRepresentable {
         let userContentController = WKUserContentController()
         userContentController.add(context.coordinator, name: "gameBridge")
         userContentController.addUserScript(WKUserScript(
+            source: GameBrowserCapabilityScript.source,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        ))
+        userContentController.addUserScript(WKUserScript(
+            source: GameVirtualInputBridgeScript.source,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        ))
+        userContentController.addUserScript(WKUserScript(
             source: Self.diagnosticScript,
             injectionTime: .atDocumentStart,
             forMainFrameOnly: false
@@ -128,6 +138,10 @@ struct GameWebView: UIViewRepresentable {
                 })();
                 """)
             }
+        }
+
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            Task { @MainActor in self.model?.releaseAllKeys() }
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse) async -> WKNavigationResponsePolicy {

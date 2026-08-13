@@ -285,6 +285,12 @@ private struct GameButton: View {
                     isPressed = false
                     model.sendKey(key, pressed: false)
                 })
+            .onDisappear {
+                if isPressed {
+                    isPressed = false
+                    model.sendKey(key, pressed: false)
+                }
+            }
             .accessibilityLabel(key.rawValue)
     }
 }

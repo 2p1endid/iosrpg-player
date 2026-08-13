@@ -18,6 +18,7 @@ final class PlayerModel: ObservableObject {
     private var httpServer: LocalGameHTTPServer?
     private var isLoading = false
     private let maximumDiagnosticCount = 100
+    private var heldKeys: Set<VirtualGameKey> = []
 
     var latestDiagnostic: GameRuntimeDiagnostic? { diagnostics.last }
     var hasDiagnosticErrors: Bool { diagnostics.contains { $0.severity == .error } }
@@ -92,6 +93,7 @@ final class PlayerModel: ObservableObject {
         }
         errorMessage = nil
         status = "正在重新加载 \(gameName)…"
+        releaseAllKeys()
         webView.load(URLRequest(url: currentURL))
     }
 
@@ -103,6 +105,7 @@ final class PlayerModel: ObservableObject {
     }
 
     func sendKey(_ key: VirtualGameKey, pressed: Bool) {
+        if pressed { heldKeys.insert(key) } else { heldKeys.remove(key) }
         let script = VirtualInputScriptBuilder.script(for: key.mapping, pressed: pressed)
         webView?.evaluateJavaScript(script) { [weak self] _, error in
             if let error {
@@ -112,6 +115,7 @@ final class PlayerModel: ObservableObject {
     }
 
     func releaseAllKeys() {
+        heldKeys.removeAll()
         webView?.evaluateJavaScript(VirtualInputScriptBuilder.releaseAllScript())
     }
 

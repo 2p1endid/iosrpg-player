@@ -19,6 +19,7 @@
 - RPG Maker 兼容虚拟输入桥，同时派发 DOM 键盘事件并同步 `Input._currentState`。
 - 按游戏 Canvas 比例自适应画面，虚拟手柄覆盖显示且可隐藏。
 - 对 NW.js-only 的日志与 ModManager bundle 提供浏览器能力回退，避免 `import.meta`、`require`、`fs/path/process` 阻断 MV 引擎初始化。
+- 在 document-start 注入受限 Node 能力垫片及持久虚拟输入桥，为仍直接调用 `require('fs'/'path')` 的插件提供安全回退，并持续同步 RPG Maker `Input._currentState`。
 - MV/MZ 项目标志识别。
 - 路径穿越防护和 MIME 类型映射。
 - Swift 虚拟按键到 JavaScript `KeyboardEvent`。
