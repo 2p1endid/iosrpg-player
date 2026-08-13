@@ -159,17 +159,18 @@ struct GamePlayerScreen: View {
     init(game: ImportedGame?) { _model = StateObject(wrappedValue: PlayerModel(game: game)) }
 
     var body: some View {
-        GeometryReader { proxy in
-            let viewport = GameViewportSizing.fit(
-                content: model.gameCanvasSize,
-                container: proxy.size
-            )
-            ZStack {
-                Color.black.ignoresSafeArea()
-                GameWebView(model: model)
-                    .frame(width: viewport.width, height: viewport.height)
-                    .background(Color.black)
-                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+        ZStack {
+            Color.black.ignoresSafeArea()
+            GeometryReader { proxy in
+                let viewport = GameViewportSizing.fit(
+                    content: model.gameCanvasSize,
+                    container: proxy.size
+                )
+                ZStack {
+                    GameWebView(model: model)
+                        .frame(width: viewport.width, height: viewport.height)
+                        .background(Color.black)
+                        .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
 
                 if showsController {
                     controllerOverlay
@@ -182,11 +183,11 @@ struct GamePlayerScreen: View {
                     toolbarHandle(proxy: proxy)
                         .transition(.opacity)
                 }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipped()
         }
-        .ignoresSafeArea()
         .statusBarHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
@@ -196,7 +197,7 @@ struct GamePlayerScreen: View {
             toolbarHideTask?.cancel()
             model.stop()
         }
-        .onChange(of: model.hasDiagnosticErrors) { _, hasErrors in
+        .onChange(of: hasRuntimeError) { _, hasErrors in
             if hasErrors { showToolbarTemporarily(keepVisible: true) }
         }
         .onChange(of: showsDiagnostics) { _, isPresented in
@@ -218,8 +219,8 @@ struct GamePlayerScreen: View {
             Button {
                 showsDiagnostics = true
             } label: {
-                Image(systemName: model.hasDiagnosticErrors ? "exclamationmark.triangle.fill" : "doc.text.magnifyingglass")
-                    .foregroundStyle(model.hasDiagnosticErrors ? .red : .white)
+                Image(systemName: hasRuntimeError ? "exclamationmark.triangle.fill" : "doc.text.magnifyingglass")
+                    .foregroundStyle(hasRuntimeError ? .red : .white)
                     .frame(width: 36, height: 36)
             }
             .accessibilityLabel("运行诊断")
@@ -254,8 +255,8 @@ struct GamePlayerScreen: View {
         Button {
             showToolbarTemporarily()
         } label: {
-            Image(systemName: model.hasDiagnosticErrors ? "exclamationmark.triangle.fill" : "chevron.down")
-                .foregroundStyle(model.hasDiagnosticErrors ? .red : .white)
+            Image(systemName: hasRuntimeError ? "exclamationmark.triangle.fill" : "chevron.down")
+                .foregroundStyle(hasRuntimeError ? .red : .white)
                 .frame(width: 44, height: 24)
                 .background(.ultraThinMaterial, in: Capsule())
         }
@@ -285,7 +286,7 @@ struct GamePlayerScreen: View {
 
     private func scheduleToolbarHide() {
         toolbarHideTask?.cancel()
-        guard !showsDiagnostics, !model.hasDiagnosticErrors else { return }
+        guard !showsDiagnostics, !hasRuntimeError else { return }
         toolbarHideTask = Task {
             try? await Task.sleep(for: .seconds(4))
             guard !Task.isCancelled else { return }
@@ -295,16 +296,27 @@ struct GamePlayerScreen: View {
         }
     }
 
+    private var hasRuntimeError: Bool {
+        model.hasDiagnosticErrors || model.errorMessage != nil
+    }
+
     private var controllerOverlay: some View {
         GeometryReader { proxy in
-            let buttonSize = min(max(proxy.size.height * 0.13, 48), 72)
+            let leadingInset = max(proxy.safeAreaInsets.leading, 18)
+            let trailingInset = max(proxy.safeAreaInsets.trailing, 18)
+            let minimumGap: CGFloat = 12
+            let buttonSize = GameControllerLayout.buttonDiameter(
+                in: proxy.size,
+                horizontalInsets: leadingInset + trailingInset,
+                minimumGap: minimumGap
+            )
             HStack(alignment: .bottom) {
                 directionPad(buttonSize: buttonSize)
-                Spacer(minLength: 24)
+                Spacer(minLength: minimumGap)
                 faceButtons(buttonSize: buttonSize)
             }
-            .padding(.leading, max(proxy.safeAreaInsets.leading, 18))
-            .padding(.trailing, max(proxy.safeAreaInsets.trailing, 18))
+            .padding(.leading, leadingInset)
+            .padding(.trailing, trailingInset)
             .padding(.bottom, max(proxy.safeAreaInsets.bottom, 16))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }

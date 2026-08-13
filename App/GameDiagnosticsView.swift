@@ -8,48 +8,41 @@ struct GameDiagnosticsView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
+            List {
+                currentStatusSection
+
                 if model.diagnostics.isEmpty {
                     ContentUnavailableView(
                         "暂无诊断",
-                        systemImage: "checkmark.circle",
-                        description: Text("运行错误、HTTP 错误和控制台信息会显示在这里。")
+                        systemImage: model.errorMessage == nil ? "checkmark.circle" : "exclamationmark.triangle.fill",
+                        description: Text(model.errorMessage ?? "运行错误、HTTP 错误和控制台信息会显示在这里。")
                     )
                 } else {
-                    List {
-                        Section("当前状态") {
-                            LabeledContent("游戏", value: model.gameName)
-                            LabeledContent("状态", value: model.status)
-                            Text(model.lastGameMessage)
-                                .font(.caption.monospaced())
-                                .textSelection(.enabled)
+                    Section("操作") {
+                        Button("复制当前错误") { copyLatest() }
+                        Button("复制完整诊断") { copyFullReport() }
+                        ShareLink(item: model.copyableDiagnosticReport) {
+                            Label("分享完整诊断", systemImage: "square.and.arrow.up")
                         }
-                        Section("操作") {
-                            Button("复制当前错误") { copyLatest() }
-                            Button("复制完整诊断") { copyFullReport() }
-                            ShareLink(item: model.copyableDiagnosticReport) {
-                                Label("分享完整诊断", systemImage: "square.and.arrow.up")
-                            }
-                            Button("清除诊断", role: .destructive) { model.clearDiagnostics() }
-                        }
+                        Button("清除诊断", role: .destructive) { model.clearDiagnostics() }
+                    }
 
-                        ForEach(model.diagnostics.reversed()) { diagnostic in
-                            Section {
-                                Text(GameRuntimeDiagnosticFormatter.single(
-                                    diagnostic,
-                                    engineLabel: model.game?.engineLabel
-                                ))
-                                .font(.caption.monospaced())
-                                .textSelection(.enabled)
-                            } header: {
-                                HStack {
-                                    Label(
-                                        diagnostic.category.rawValue,
-                                        systemImage: diagnostic.severity == .error ? "exclamationmark.triangle.fill" : "info.circle"
-                                    )
-                                    Spacer()
-                                    Text(diagnostic.timestamp, style: .time)
-                                }
+                    ForEach(model.diagnostics.reversed()) { diagnostic in
+                        Section {
+                            Text(GameRuntimeDiagnosticFormatter.single(
+                                diagnostic,
+                                engineLabel: model.game?.engineLabel
+                            ))
+                            .font(.caption.monospaced())
+                            .textSelection(.enabled)
+                        } header: {
+                            HStack {
+                                Label(
+                                    diagnostic.category.rawValue,
+                                    systemImage: diagnostic.severity == .error ? "exclamationmark.triangle.fill" : "info.circle"
+                                )
+                                Spacer()
+                                Text(diagnostic.timestamp, style: .time)
                             }
                         }
                     }
@@ -70,6 +63,19 @@ struct GameDiagnosticsView: View {
             } message: {
                 Text(copiedMessage ?? "")
             }
+        }
+    }
+
+    private var currentStatusSection: some View {
+        Section("当前状态") {
+            LabeledContent("游戏", value: model.gameName)
+            LabeledContent("状态", value: model.status)
+            if let error = model.errorMessage {
+                Text(error).foregroundStyle(.red).textSelection(.enabled)
+            }
+            Text(model.lastGameMessage)
+                .font(.caption.monospaced())
+                .textSelection(.enabled)
         }
     }
 

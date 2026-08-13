@@ -165,7 +165,7 @@ final class GameFileRulesTests: XCTestCase {
                 buttonDiameter: button,
                 minimumGap: 12
             )
-            XCTAssertLessThanOrEqual(requiredWidth + 36, width, accuracy: 0.001)
+            XCTAssertLessThanOrEqual(requiredWidth + 36, width + 0.001)
         }
     }
 

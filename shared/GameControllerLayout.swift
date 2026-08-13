@@ -9,6 +9,21 @@ struct FaceButtonLayout: Equatable {
 }
 
 enum GameControllerLayout {
+    static func buttonDiameter(
+        in size: CGSize,
+        horizontalInsets: CGFloat,
+        minimumGap: CGFloat
+    ) -> CGFloat {
+        let heightBased = min(max(size.height * 0.13, 36), 72)
+        let availableWidth = max(0, size.width - horizontalInsets - minimumGap)
+        let widthBased = availableWidth / 6.15
+        return max(36, min(heightBased, widthBased))
+    }
+
+    static func combinedControllerWidth(buttonDiameter: CGFloat, minimumGap: CGFloat) -> CGFloat {
+        (buttonDiameter * 3 + 6) + minimumGap + (buttonDiameter * 3.15)
+    }
+
     static func faceButtons(in size: CGSize) -> FaceButtonLayout {
         let minimumSide = max(0, min(size.width, size.height))
         let diameter = min(max(minimumSide * 0.28, 48), 72)
