@@ -90,6 +90,8 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertTrue(script.contains("existsSync"))
         XCTAssertTrue(script.contains("readFileSync"))
         XCTAssertTrue(script.contains("mainModule"))
+        XCTAssertTrue(script.contains("__iosRPGBrowserRequire"))
+        XCTAssertFalse(script.contains("globalThis.require ="))
     }
 
     func testPersistentInputBridgeMaintainsHeldState() {
@@ -186,6 +188,30 @@ final class GameFileRulesTests: XCTestCase {
             GameRuntimeCompatibilityPatcher.patch(data, relativePath: "js/rpg_managers.js"),
             data
         )
+    }
+
+    func testCompatibilityPatcherDisablesGreenworksInBrowserMode() throws {
+        let source = "if (Utils.isNwjs()) { $.greenworks = require('./greenworks'); $.initialized = $.greenworks.initAPI(); }"
+        let patchedData = GameRuntimeCompatibilityPatcher.patch(
+            Data(source.utf8),
+            relativePath: "js/plugins/OrangeGreenworks.js"
+        )
+        let patched = try XCTUnwrap(String(data: patchedData, encoding: .utf8))
+
+        XCTAssertFalse(patched.contains("if (Utils.isNwjs())"))
+        XCTAssertTrue(patched.contains("if (false)"))
+    }
+
+    func testCompatibilityPatcherSkipsNodeOnlyDLCDetection() throws {
+        let source = "DKTools.PreloadManager.checkForDLCs = function() { var fs = require('fs'); };"
+        let patchedData = GameRuntimeCompatibilityPatcher.patch(
+            Data(source.utf8),
+            relativePath: "js/plugins/RemtairyMisc.js"
+        )
+        let patched = try XCTUnwrap(String(data: patchedData, encoding: .utf8))
+
+        XCTAssertTrue(patched.contains("DLC_GYM = false"))
+        XCTAssertFalse(patched.contains("require('fs')"))
     }
 
     func testImportPickerSelectionKeepsSourceUntilCompletion() {
