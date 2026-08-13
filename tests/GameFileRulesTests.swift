@@ -185,6 +185,30 @@ final class GameFileRulesTests: XCTestCase {
         }
     }
 
+    func testDeviceViewportUsesFullContainerInsteadOfDoubleAspectFit() {
+        let iPad = CGSize(width: 1_366, height: 1_024)
+        XCTAssertEqual(GameViewportSizing.webViewSize(container: iPad), iPad)
+    }
+
+    func testRPGMakerScaleFitsLogicalCanvasInsideDeviceViewport() {
+        XCTAssertEqual(
+            GameViewportSizing.rpgMakerScale(
+                logical: CGSize(width: 1_440, height: 810),
+                viewport: CGSize(width: 1_366, height: 1_024)
+            ),
+            1_366.0 / 1_440.0,
+            accuracy: 0.0001
+        )
+        XCTAssertEqual(
+            GameViewportSizing.rpgMakerScale(
+                logical: CGSize(width: 745, height: 400),
+                viewport: CGSize(width: 1_366, height: 1_024)
+            ),
+            1_366.0 / 745.0,
+            accuracy: 0.0001
+        )
+    }
+
     func testCompatibilityPatcherLeavesFunctionScopedTilemapManagerUntouched() {
         let source = "function requireRpgMaker(){ var PluginManager={parameters:function(){}}; PluginManager.parameters(); }"
         let data = Data(source.utf8)
