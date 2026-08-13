@@ -107,9 +107,17 @@ final class PlayerModel: ObservableObject {
     func sendKey(_ key: VirtualGameKey, pressed: Bool) {
         if pressed { heldKeys.insert(key) } else { heldKeys.remove(key) }
         let script = VirtualInputScriptBuilder.script(for: key.mapping, pressed: pressed)
-        webView?.evaluateJavaScript(script) { [weak self] _, error in
+        webView?.evaluateJavaScript(script) { [weak self] result, error in
             if let error {
-                Task { @MainActor in self?.errorMessage = "发送按键失败：\(error.localizedDescription)" }
+                Task { @MainActor in
+                    self?.errorMessage = "发送按键失败：\(error.localizedDescription)"
+                    self?.receiveBridgeMessage([
+                        "category": "bridge", "severity": "error",
+                        "message": "虚拟按键 \(key.rawValue) 注入失败：\(error.localizedDescription)"
+                    ])
+                }
+            } else if pressed {
+                Task { @MainActor in self?.lastGameMessage = "虚拟按键 \(key.rawValue) 已发送（\(String(describing: result))）" }
             }
         }
     }
