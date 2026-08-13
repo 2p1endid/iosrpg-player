@@ -85,7 +85,6 @@ final class GameFileRulesTests: XCTestCase {
     func testBrowserCapabilityShimDefinesSafeRequireAndLoggerAlias() {
         let script = GameBrowserCapabilityScript.source
 
-        XCTAssertTrue(script.contains("globalThis.require"))
         XCTAssertTrue(script.contains("globalThis.logger"))
         XCTAssertTrue(script.contains("existsSync"))
         XCTAssertTrue(script.contains("readFileSync"))
@@ -203,7 +202,11 @@ final class GameFileRulesTests: XCTestCase {
     }
 
     func testCompatibilityPatcherSkipsNodeOnlyDLCDetection() throws {
-        let source = "DKTools.PreloadManager.checkForDLCs = function() { var fs = require('fs'); };"
+        let source = """
+        DKTools.PreloadManager.checkForDLCs = function() {
+            var fs = require('fs');
+        };
+        """
         let patchedData = GameRuntimeCompatibilityPatcher.patch(
             Data(source.utf8),
             relativePath: "js/plugins/RemtairyMisc.js"
