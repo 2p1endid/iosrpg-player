@@ -28,13 +28,20 @@ struct ContentView: View {
                         Button { importPicker.present(.zip) } label: {
                             Label("导入 ZIP", systemImage: "doc.zipper")
                         }
+                        .disabled(library.importProgress != nil)
                         Button { importPicker.present(.folder) } label: {
                             Label("导入文件夹", systemImage: "folder.badge.plus")
                         }
+                        .disabled(library.importProgress != nil)
+                        Divider()
+                        NavigationLink {
+                            AboutView()
+                        } label: {
+                            Label("关于 / About", systemImage: "info.circle")
+                        }
                     } label: {
-                        Label("导入游戏", systemImage: "plus")
+                        Label("更多", systemImage: "ellipsis.circle")
                     }
-                    .disabled(library.importProgress != nil)
                 }
             }
             .navigationDestination(for: ImportedGame.self) { game in

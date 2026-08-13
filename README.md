@@ -1,59 +1,193 @@
 # iOS RPG Player
 
-一个面向 iPhone/iPad 的 RPG Maker 本地游戏播放器实验项目。当前只验证 MV/MZ Web 游戏运行路径。
+[中文](#中文) · [English](#english)
 
-## 当前能力
+## 中文
 
-- 从 iOS“文件”App 选择已经解压的 RPG Maker MV/MZ 游戏文件夹
-- 直接导入 RPG Maker MV/MZ ZIP，并拒绝路径穿越、符号链接和超大压缩包
-- 在“文件”App 的“我的 iPhone/iPad”中显示应用 Documents、Games 和 library.json
-- 自动查找最多四层嵌套目录中的游戏根目录
-- 将游戏复制到 App 的 Documents/Games 沙盒并持久化游戏库
-- 从游戏库启动、重新加载和删除游戏
-- 每个游戏通过 App 内嵌的随机端口 `http://127.0.0.1:<port>/games/<UUID>/index.html` 加载
-- 本地服务器只监听回环地址并只接受 GET/HEAD，资源路径仍限制在当前游戏根目录
+iOS RPG Player 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地游戏播放器雏形。它允许用户从“文件”App导入自己合法持有的、已经部署为Web项目的RPG Maker MV/MZ游戏，并通过应用内的本地服务器和WKWebView运行。
 
-- SwiftUI + WKWebView 播放器外壳。
-- localhost HTTP 运行层，兼容 MV/MZ 的 XHR、相对 URL、加密资源和空图片 URL 浏览器语义。
-- 完整运行诊断：JavaScript/Promise/console/HTTP 错误可查看全文、调用栈并一键复制或分享。
-- RPG Maker 兼容虚拟输入桥，同时派发 DOM 键盘事件并同步 `Input._currentState`。
-- WKWebView 使用设备完整可用分辨率，RPG Maker 根据逻辑画幅与设备 CSS 视口执行单层等比缩放，顶部操作为可自动隐藏的浮动工具栏。
-- 虚拟手柄覆盖显示且可隐藏，A/B/X/Y 使用等大的 Xbox 菱形布局。
-- 对 NW.js-only 的日志与 ModManager bundle 提供浏览器能力回退，避免 `import.meta`、`require`、`fs/path/process` 阻断 MV 引擎初始化。
-- 在 document-start 注入受限 Node 能力垫片及持久虚拟输入桥，为仍直接调用 `require('fs'/'path')` 的插件提供安全回退，并持续同步 RPG Maker `Input._currentState`。
-- MV/MZ 项目标志识别。
-- 路径穿越防护和 MIME 类型映射。
-- Swift 虚拟按键到 JavaScript `KeyboardEvent`。
-- JavaScript 到 Swift 消息桥。
-- 内置自制测试游戏和 `localStorage` 持久化。
-- Node 自动化测试。
-- XcodeGen 工程描述与 macOS 构建脚本。
+> 本项目不包含、提供或分发RPG Maker运行时、商业游戏、DLC、Mod或任何第三方游戏资源。用户应确保自己有权使用所导入的内容。
 
-## 目录
+### 当前版本
 
-```text
-App/                     SwiftUI / WebKit App
-shared/                  可测试的游戏文件规则
-tests/                   XCTest 与 Node 测试
-Resources/TestGame/      自制 MZ 风格测试游戏
-scripts/                 测试服务器与 iOS 构建脚本
-spikes/                  可行性验证记录
-PROJECT_GOAL.md           项目总目标
-BUILD_IPA.md              IPA 构建说明
-project.yml               XcodeGen 工程描述
+- 对外版本：`0.1.0`
+- 内部构建号：`14`
+- 最低系统：iOS/iPadOS 17.0
+- 作者：[2p1endid](https://github.com/2p1endid)
+- 项目主页：<https://github.com/2p1endid/iosrpg-player>
+- 许可证：[MIT License](LICENSE)
+
+### 主要功能
+
+- 从iOS“文件”App导入RPG Maker MV/MZ ZIP或已解压文件夹；
+- 自动识别最多四层嵌套目录中的游戏根目录；
+- 安全解压ZIP，拒绝路径穿越、绝对路径、符号链接和超限压缩包；
+- 将游戏保存在应用沙盒中并维护本地游戏库；
+- 通过仅监听`127.0.0.1`随机端口的内嵌HTTP服务器运行游戏；
+- 支持MV/MZ常见XHR、相对URL、加密资源和浏览器加载语义；
+- 全屏WKWebView与按游戏逻辑分辨率等比缩放；
+- 可隐藏的触屏虚拟手柄，包含方向键和A/B/X/Y；
+- RPG Maker逻辑输入与DOM键盘事件双通道输入桥；
+- JavaScript、Promise、console、HTTP与桥接错误的结构化诊断；
+- 针对部分NW.js专用插件提供受限、按文件匹配的浏览器兼容回退；
+- 在“关于 / About”页面显示版本、构建号、作者、GitHub、许可证和第三方开源项目。
+
+### 支持范围与限制
+
+当前重点支持RPG Maker MV/MZ的Web部署项目。兼容性取决于游戏自身使用的插件、媒体格式和桌面专用能力。
+
+当前不承诺支持：
+
+- RPG Maker XP、VX、VX Ace；
+- 需要RTP的非Web项目；
+- RAR、7z、APK；
+- 依赖完整Node.js、NW.js文件系统、Steam API或桌面原生模块的功能；
+- 未经授权的游戏资源、破解内容或商业DLC分发。
+
+### 安装说明
+
+Release中的`IOSRPGPlayer-unsigned.ipa`是真正的未签名设备构建：
+
+- 没有Apple开发者证书；
+- 没有provisioning profile；
+- 不能直接安装到普通iPhone/iPad；
+- 需要用户使用自己合法的Apple开发者身份和匹配的provisioning profile重新签名。
+
+### 构建
+
+项目使用XcodeGen生成Xcode工程。需要macOS、Xcode和XcodeGen：
+
+```bash
+brew install xcodegen
+./scripts/build-ios.sh simulator
+./scripts/build-ios.sh archive-unsigned
 ```
 
-## Windows 上验证
+Windows可运行便携测试：
 
 ```bash
 npm test
-npm run serve:test-game
 ```
 
-打开 `http://127.0.0.1:4173`，方向键移动，Enter 计数，Escape 重置。
+更多说明见[BUILD_IPA.md](BUILD_IPA.md)。
 
-## macOS/iOS 构建
+### 使用的其他开源项目
 
-参见 [BUILD_IPA.md](BUILD_IPA.md)。
+#### 运行时依赖
 
-> 当前内置测试页不是 RPG Maker 官方运行时，也不证明所有真实 MV/MZ 游戏已经兼容。下一步必须用自制、合法的真实 MV/MZ 导出项目在 Xcode 模拟器和真机验证。
+| 项目 | 用途 | 许可证 |
+|---|---|---|
+| [ZIPFoundation](https://github.com/weichsel/ZIPFoundation) | ZIP读取与安全解压 | MIT |
+
+#### 构建与持续集成工具
+
+| 项目 | 用途 | 许可证 |
+|---|---|---|
+| [XcodeGen](https://github.com/yonaskolb/XcodeGen) | 根据`project.yml`生成Xcode工程 | MIT |
+| [actions/checkout](https://github.com/actions/checkout) | GitHub Actions源码检出 | MIT |
+| [actions/upload-artifact](https://github.com/actions/upload-artifact) | GitHub Actions构建产物上传 | MIT |
+| [Node.js](https://github.com/nodejs/node) | 运行便携自动化测试 | Node.js License（MIT类许可及组件许可） |
+
+Apple的SwiftUI、UIKit、WebKit、Network、Foundation、CoreGraphics、UniformTypeIdentifiers和XCTest属于系统SDK框架，不作为项目内第三方依赖分发。
+
+第三方项目保留其各自的版权与许可证。本项目的MIT许可证只适用于本仓库原创代码，不替代第三方许可证。
+
+### 许可证
+
+本项目以[MIT License](LICENSE)发布。
+
+---
+
+## English
+
+iOS RPG Player is an open-source prototype local player for RPG Maker MV/MZ games on iPhone and iPad. It lets users import legally obtained RPG Maker MV/MZ games that have been deployed as web projects from the Files app, then runs them through an embedded local server and WKWebView.
+
+> This project does not include, provide, or distribute RPG Maker runtimes, commercial games, DLC, mods, or third-party game assets. Users are responsible for ensuring that they have the right to use all imported content.
+
+### Current Version
+
+- Public version: `0.1.0`
+- Internal build number: `14`
+- Minimum OS: iOS/iPadOS 17.0
+- Author: [2p1endid](https://github.com/2p1endid)
+- Repository: <https://github.com/2p1endid/iosrpg-player>
+- License: [MIT License](LICENSE)
+
+### Features
+
+- Imports RPG Maker MV/MZ ZIP archives or extracted folders from the iOS Files app;
+- Finds game roots nested up to four directory levels deep;
+- Safely extracts ZIP archives while rejecting traversal, absolute paths, symbolic links, and oversized archives;
+- Stores games in the app sandbox and maintains a persistent local library;
+- Runs each game through an embedded HTTP server bound only to `127.0.0.1` on a random port;
+- Supports common MV/MZ XHR, relative URL, encrypted-resource, and browser loading semantics;
+- Provides a fullscreen WKWebView with aspect-preserving logical-resolution scaling;
+- Includes a hideable touch controller with a D-pad and A/B/X/Y buttons;
+- Sends input through both RPG Maker logical state and DOM keyboard events;
+- Captures structured JavaScript, Promise, console, HTTP, and bridge diagnostics;
+- Applies narrowly scoped browser fallbacks for selected NW.js-only plugins;
+- Shows version, build, author, GitHub, license, and third-party projects in a bilingual About screen.
+
+### Scope and Limitations
+
+The current focus is RPG Maker MV/MZ web deployment projects. Compatibility depends on each game's plugins, media formats, and desktop-only assumptions.
+
+The project does not currently promise support for:
+
+- RPG Maker XP, VX, or VX Ace;
+- Non-web projects that require RTP;
+- RAR, 7z, or APK imports;
+- Features that require full Node.js, NW.js filesystem access, Steam APIs, or desktop native modules;
+- Distribution of unauthorized game assets, cracked content, or commercial DLC.
+
+### Installation
+
+`IOSRPGPlayer-unsigned.ipa` in the Release is a genuinely unsigned device build:
+
+- It has no Apple developer certificate;
+- It has no provisioning profile;
+- It cannot be installed directly on a normal iPhone or iPad;
+- Users must re-sign it with their own legitimate Apple developer identity and a matching provisioning profile.
+
+### Building
+
+The project uses XcodeGen to generate the Xcode project. macOS, Xcode, and XcodeGen are required:
+
+```bash
+brew install xcodegen
+./scripts/build-ios.sh simulator
+./scripts/build-ios.sh archive-unsigned
+```
+
+Portable tests can be run on Windows:
+
+```bash
+npm test
+```
+
+See [BUILD_IPA.md](BUILD_IPA.md) for additional details.
+
+### Other Open-Source Projects Used
+
+#### Runtime Dependency
+
+| Project | Purpose | License |
+|---|---|---|
+| [ZIPFoundation](https://github.com/weichsel/ZIPFoundation) | ZIP reading and safe extraction | MIT |
+
+#### Build and Continuous Integration Tools
+
+| Project | Purpose | License |
+|---|---|---|
+| [XcodeGen](https://github.com/yonaskolb/XcodeGen) | Generates the Xcode project from `project.yml` | MIT |
+| [actions/checkout](https://github.com/actions/checkout) | Checks out source in GitHub Actions | MIT |
+| [actions/upload-artifact](https://github.com/actions/upload-artifact) | Uploads build artifacts in GitHub Actions | MIT |
+| [Node.js](https://github.com/nodejs/node) | Runs portable automated tests | Node.js License (MIT-style and component licenses) |
+
+Apple's SwiftUI, UIKit, WebKit, Network, Foundation, CoreGraphics, UniformTypeIdentifiers, and XCTest are system SDK frameworks and are not distributed as third-party project dependencies.
+
+Third-party projects retain their respective copyrights and licenses. This repository's MIT License applies only to original code in this repository and does not replace third-party licenses.
+
+### License
+
+This project is released under the [MIT License](LICENSE).
