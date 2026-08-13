@@ -39,6 +39,7 @@ struct GameWebView: UIViewRepresentable {
         webView.scrollView.backgroundColor = .black
         webView.scrollView.isScrollEnabled = false
         webView.scrollView.bounces = false
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.allowsBackForwardNavigationGestures = false
         webView.configuration.mediaTypesRequiringUserActionForPlayback = []
 
@@ -130,12 +131,16 @@ struct GameWebView: UIViewRepresentable {
                 }
                 model.didFinishLoading()
                 webView.evaluateJavaScript("""
-                (function(){
+                (function reportViewport(attempt){
                   var canvas = document.querySelector('canvas');
                   var width = (typeof Graphics !== 'undefined' && Graphics.width) || (canvas && canvas.width) || 0;
                   var height = (typeof Graphics !== 'undefined' && Graphics.height) || (canvas && canvas.height) || 0;
-                  window.webkit.messageHandlers.gameBridge.postMessage({category:'viewport', severity:'info', message:'viewport', width:width, height:height, pageURL:location.href});
-                })();
+                  if (width > 0 && height > 0) {
+                    window.webkit.messageHandlers.gameBridge.postMessage({category:'viewport', severity:'info', message:'viewport', width:width, height:height, pageURL:location.href});
+                  } else if (attempt < 20) {
+                    setTimeout(function(){ reportViewport(attempt + 1); }, 100);
+                  }
+                })(0);
                 """)
             }
         }

@@ -153,82 +153,146 @@ struct GamePlayerScreen: View {
     @StateObject private var model: PlayerModel
     @State private var showsDiagnostics = false
     @State private var showsController = true
+    @State private var showsToolbar = true
+    @State private var toolbarHideTask: Task<Void, Never>?
 
     init(game: ImportedGame?) { _model = StateObject(wrappedValue: PlayerModel(game: game)) }
 
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            VStack(spacing: 0) {
-                header
-                GeometryReader { proxy in
-                    let viewport = GameViewportSizing.fit(
-                        content: model.gameCanvasSize,
-                        container: proxy.size
-                    )
-                    ZStack {
-                        GameWebView(model: model)
-                            .frame(width: viewport.width, height: viewport.height)
-                            .background(Color.black)
-                            .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
-                        if showsController { controllerOverlay }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipped()
+        GeometryReader { proxy in
+            let viewport = GameViewportSizing.fit(
+                content: model.gameCanvasSize,
+                container: proxy.size
+            )
+            ZStack {
+                Color.black.ignoresSafeArea()
+                GameWebView(model: model)
+                    .frame(width: viewport.width, height: viewport.height)
+                    .background(Color.black)
+                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+
+                if showsController {
+                    controllerOverlay
+                }
+
+                if showsToolbar {
+                    toolbarOverlay(proxy: proxy)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                } else {
+                    toolbarHandle(proxy: proxy)
+                        .transition(.opacity)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipped()
         }
+        .ignoresSafeArea()
+        .statusBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
         .preferredColorScheme(.dark)
-        .onDisappear { model.stop() }
+        .onAppear { scheduleToolbarHide() }
+        .onDisappear {
+            toolbarHideTask?.cancel()
+            model.stop()
+        }
+        .onChange(of: model.hasDiagnosticErrors) { _, hasErrors in
+            if hasErrors { showToolbarTemporarily(keepVisible: true) }
+        }
+        .onChange(of: showsDiagnostics) { _, isPresented in
+            if isPresented {
+                toolbarHideTask?.cancel()
+            } else {
+                scheduleToolbarHide()
+            }
+        }
         .sheet(isPresented: $showsDiagnostics) {
             GameDiagnosticsView(model: model)
         }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Button { dismiss() } label: { Label("游戏库", systemImage: "chevron.left") }
-                Text(model.gameName).font(.headline).lineLimit(1)
-                Spacer()
-                if !model.diagnostics.isEmpty {
-                    Button {
-                        showsDiagnostics = true
-                    } label: {
-                        Label("错误详情", systemImage: model.hasDiagnosticErrors ? "exclamationmark.triangle.fill" : "doc.text.magnifyingglass")
-                            .labelStyle(.iconOnly)
-                            .foregroundStyle(model.hasDiagnosticErrors ? .red : .secondary)
-                    }
-                    .accessibilityLabel("错误详情")
-                }
-                Button {
-                    showsController.toggle()
-                } label: {
-                    Image(systemName: showsController ? "gamecontroller.fill" : "gamecontroller")
-                }
-                .accessibilityLabel(showsController ? "隐藏虚拟手柄" : "显示虚拟手柄")
-                Button("重新加载") { model.reloadGame() }.buttonStyle(.bordered)
+    private func toolbarOverlay(proxy: GeometryProxy) -> some View {
+        HStack(spacing: 8) {
+            toolbarButton("chevron.left", label: "游戏库") { dismiss() }
+
+            Button {
+                showsDiagnostics = true
+            } label: {
+                Image(systemName: model.hasDiagnosticErrors ? "exclamationmark.triangle.fill" : "doc.text.magnifyingglass")
+                    .foregroundStyle(model.hasDiagnosticErrors ? .red : .white)
+                    .frame(width: 36, height: 36)
             }
-            Text(model.status).font(.caption).foregroundStyle(.secondary)
-            Text("JS: \(model.lastGameMessage)")
-                .font(.caption2.monospaced()).foregroundStyle(.mint).lineLimit(2)
-                .contentShape(Rectangle())
-                .onTapGesture { if !model.diagnostics.isEmpty { showsDiagnostics = true } }
-            if let error = model.errorMessage {
-                Button {
-                    showsDiagnostics = true
-                } label: {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                }
-                .buttonStyle(.plain)
+            .accessibilityLabel("运行诊断")
+
+            toolbarButton(
+                showsController ? "gamecontroller.fill" : "gamecontroller",
+                label: showsController ? "隐藏虚拟手柄" : "显示虚拟手柄"
+            ) {
+                showsController.toggle()
+                if !showsController { model.releaseAllKeys() }
+                showToolbarTemporarily()
+            }
+
+            toolbarButton("arrow.clockwise", label: "重新加载") {
+                model.reloadGame()
+                showToolbarTemporarily()
+            }
+
+            toolbarButton("chevron.up", label: "隐藏工具栏") {
+                toolbarHideTask?.cancel()
+                withAnimation(.easeOut(duration: 0.2)) { showsToolbar = false }
             }
         }
-        .padding(.horizontal).padding(.vertical, 8).background(.ultraThinMaterial)
+        .padding(6)
+        .background(.ultraThinMaterial, in: Capsule())
+        .padding(.top, max(proxy.safeAreaInsets.top, 8))
+        .padding(.leading, max(proxy.safeAreaInsets.leading, 10))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private func toolbarHandle(proxy: GeometryProxy) -> some View {
+        Button {
+            showToolbarTemporarily()
+        } label: {
+            Image(systemName: model.hasDiagnosticErrors ? "exclamationmark.triangle.fill" : "chevron.down")
+                .foregroundStyle(model.hasDiagnosticErrors ? .red : .white)
+                .frame(width: 44, height: 24)
+                .background(.ultraThinMaterial, in: Capsule())
+        }
+        .accessibilityLabel("显示游戏工具栏")
+        .padding(.top, max(proxy.safeAreaInsets.top, 4))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private func toolbarButton(
+        _ systemName: String,
+        label: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .foregroundStyle(.white)
+                .frame(width: 36, height: 36)
+        }
+        .accessibilityLabel(label)
+    }
+
+    private func showToolbarTemporarily(keepVisible: Bool = false) {
+        toolbarHideTask?.cancel()
+        withAnimation(.easeOut(duration: 0.2)) { showsToolbar = true }
+        if !keepVisible { scheduleToolbarHide() }
+    }
+
+    private func scheduleToolbarHide() {
+        toolbarHideTask?.cancel()
+        guard !showsDiagnostics, !model.hasDiagnosticErrors else { return }
+        toolbarHideTask = Task {
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                withAnimation(.easeOut(duration: 0.2)) { showsToolbar = false }
+            }
+        }
     }
 
     private var controllerOverlay: some View {
@@ -237,22 +301,29 @@ struct GamePlayerScreen: View {
             HStack(alignment: .bottom) {
                 directionPad(buttonSize: buttonSize)
                 Spacer(minLength: 24)
-                HStack(alignment: .bottom, spacing: buttonSize * 0.25) {
-                    VStack(spacing: buttonSize * 0.16) {
-                        GameButton(key: .y, color: .yellow, model: model, size: buttonSize * 0.82)
-                        GameButton(key: .cancel, color: .red, model: model, size: buttonSize)
-                    }
-                    VStack(spacing: buttonSize * 0.16) {
-                        GameButton(key: .x, color: .green, model: model, size: buttonSize * 0.82)
-                        GameButton(key: .confirm, color: .blue, model: model, size: buttonSize)
-                    }
-                    .offset(y: -buttonSize * 0.35)
-                }
+                faceButtons(buttonSize: buttonSize)
             }
             .padding(.horizontal, max(proxy.safeAreaInsets.leading, 18))
+            .padding(.trailing, max(proxy.safeAreaInsets.trailing, 18))
             .padding(.bottom, max(proxy.safeAreaInsets.bottom, 16))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
+    }
+
+    private func faceButtons(buttonSize: CGFloat) -> some View {
+        let canvasSize = CGSize(width: buttonSize * 3.15, height: buttonSize * 3.15)
+        let layout = GameControllerLayout.faceButtons(in: canvasSize)
+        return ZStack {
+            GameButton(key: .confirm, color: .blue, model: model, size: layout.buttonDiameter)
+                .position(layout.a)
+            GameButton(key: .cancel, color: .red, model: model, size: layout.buttonDiameter)
+                .position(layout.b)
+            GameButton(key: .x, color: .green, model: model, size: layout.buttonDiameter)
+                .position(layout.x)
+            GameButton(key: .y, color: .yellow, model: model, size: layout.buttonDiameter)
+                .position(layout.y)
+        }
+        .frame(width: canvasSize.width, height: canvasSize.height)
     }
 
     private func directionPad(buttonSize: CGFloat) -> some View {

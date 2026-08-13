@@ -17,7 +17,8 @@
 - localhost HTTP 运行层，兼容 MV/MZ 的 XHR、相对 URL、加密资源和空图片 URL 浏览器语义。
 - 完整运行诊断：JavaScript/Promise/console/HTTP 错误可查看全文、调用栈并一键复制或分享。
 - RPG Maker 兼容虚拟输入桥，同时派发 DOM 键盘事件并同步 `Input._currentState`。
-- 按游戏 Canvas 比例自适应画面，虚拟手柄覆盖显示且可隐藏。
+- 按游戏 Canvas 比例在全屏 WKWebView 中完整显示画面，顶部操作为可自动隐藏的浮动工具栏。
+- 虚拟手柄覆盖显示且可隐藏，A/B/X/Y 使用等大的 Xbox 菱形布局。
 - 对 NW.js-only 的日志与 ModManager bundle 提供浏览器能力回退，避免 `import.meta`、`require`、`fs/path/process` 阻断 MV 引擎初始化。
 - 在 document-start 注入受限 Node 能力垫片及持久虚拟输入桥，为仍直接调用 `require('fs'/'path')` 的插件提供安全回退，并持续同步 RPG Maker `Input._currentState`。
 - MV/MZ 项目标志识别。

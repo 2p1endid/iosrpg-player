@@ -17,6 +17,13 @@ struct GameDiagnosticsView: View {
                     )
                 } else {
                     List {
+                        Section("当前状态") {
+                            LabeledContent("游戏", value: model.gameName)
+                            LabeledContent("状态", value: model.status)
+                            Text(model.lastGameMessage)
+                                .font(.caption.monospaced())
+                                .textSelection(.enabled)
+                        }
                         Section("操作") {
                             Button("复制当前错误") { copyLatest() }
                             Button("复制完整诊断") { copyFullReport() }
