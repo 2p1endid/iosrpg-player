@@ -133,6 +133,34 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertTrue(patched.contains("document.baseURI"))
     }
 
+    func testCompatibilityPatcherProvidesBrowserLoggerWithoutNodeRequire() throws {
+        let source = "module.exports = require(\"path\");"
+        let patchedData = GameRuntimeCompatibilityPatcher.patch(
+            Data(source.utf8),
+            relativePath: "js/libs/logger.js"
+        )
+        let patched = try XCTUnwrap(String(data: patchedData, encoding: .utf8))
+
+        XCTAssertFalse(patched.contains("require(\"path\")"))
+        XCTAssertTrue(patched.contains("globalThis.Logger"))
+        XCTAssertTrue(patched.contains("createDefaultLogger"))
+        XCTAssertTrue(patched.contains("fatal"))
+    }
+
+    func testCompatibilityPatcherProvidesBrowserModManagerFallback() throws {
+        let source = "module.exports = require(\"fs\");"
+        let patchedData = GameRuntimeCompatibilityPatcher.patch(
+            Data(source.utf8),
+            relativePath: "js/modManager.js"
+        )
+        let patched = try XCTUnwrap(String(data: patchedData, encoding: .utf8))
+
+        XCTAssertFalse(patched.contains("require(\"fs\")"))
+        XCTAssertTrue(patched.contains("globalThis.ModManager"))
+        XCTAssertTrue(patched.contains("getModsList"))
+        XCTAssertTrue(patched.contains("loadMods"))
+    }
+
     func testCompatibilityPatcherLeavesOtherScriptsUntouched() {
         let data = Data("var PluginManager = realManager;".utf8)
         XCTAssertEqual(
