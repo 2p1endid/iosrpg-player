@@ -154,6 +154,37 @@ final class GameFileRulesTests: XCTestCase {
         }
     }
 
+    func testCombinedControllerFitsPortraitIPhoneWidth() {
+        for width in [375.0, 393.0] {
+            let button = GameControllerLayout.buttonDiameter(
+                in: CGSize(width: width, height: 852),
+                horizontalInsets: 36,
+                minimumGap: 12
+            )
+            let requiredWidth = GameControllerLayout.combinedControllerWidth(
+                buttonDiameter: button,
+                minimumGap: 12
+            )
+            XCTAssertLessThanOrEqual(requiredWidth + 36, width, accuracy: 0.001)
+        }
+    }
+
+    func testViewportMatrixPreservesCompleteGameAspectRatios() {
+        let cases: [(CGSize, CGSize)] = [
+            (CGSize(width: 816, height: 624), CGSize(width: 852, height: 393)),
+            (CGSize(width: 745, height: 400), CGSize(width: 852, height: 393)),
+            (CGSize(width: 816, height: 624), CGSize(width: 393, height: 852)),
+            (CGSize(width: 816, height: 624), CGSize(width: 1_366, height: 1_024))
+        ]
+
+        for (content, container) in cases {
+            let result = GameViewportSizing.fit(content: content, container: container)
+            XCTAssertEqual(result.width / result.height, content.width / content.height, accuracy: 0.0001)
+            XCTAssertLessThanOrEqual(result.width, container.width)
+            XCTAssertLessThanOrEqual(result.height, container.height)
+        }
+    }
+
     func testCompatibilityPatcherLeavesFunctionScopedTilemapManagerUntouched() {
         let source = "function requireRpgMaker(){ var PluginManager={parameters:function(){}}; PluginManager.parameters(); }"
         let data = Data(source.utf8)
