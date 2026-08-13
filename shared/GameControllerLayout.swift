@@ -15,7 +15,7 @@ enum GameControllerLayout {
         minimumGap: CGFloat
     ) -> CGFloat {
         let heightBased = min(max(size.height * 0.13, 36), 72)
-        let availableWidth = max(0, size.width - horizontalInsets - minimumGap)
+        let availableWidth = max(0, size.width - horizontalInsets - minimumGap - 6)
         let widthBased = availableWidth / 6.15
         return max(36, min(heightBased, widthBased))
     }
