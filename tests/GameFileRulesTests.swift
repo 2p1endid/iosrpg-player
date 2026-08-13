@@ -63,6 +63,12 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(VirtualInputMapping.confirm.rpgAction, "ok")
         XCTAssertEqual(VirtualInputMapping.cancel.keyCode, 27)
         XCTAssertEqual(VirtualInputMapping.cancel.rpgAction, "escape")
+        XCTAssertEqual(VirtualInputMapping.x.key, "x")
+        XCTAssertEqual(VirtualInputMapping.x.keyCode, 88)
+        XCTAssertEqual(VirtualInputMapping.x.rpgAction, "menu")
+        XCTAssertEqual(VirtualInputMapping.y.key, "Shift")
+        XCTAssertEqual(VirtualInputMapping.y.keyCode, 16)
+        XCTAssertEqual(VirtualInputMapping.y.rpgAction, "shift")
     }
 
     func testVirtualInputScriptUpdatesDOMAndRPGMakerState() {
@@ -76,7 +82,7 @@ final class GameFileRulesTests: XCTestCase {
     func testReleaseAllVirtualInputsClearsEveryRPGMakerAction() {
         let script = VirtualInputScriptBuilder.releaseAllScript()
 
-        for action in ["up", "down", "left", "right", "ok", "escape"] {
+        for action in ["up", "down", "left", "right", "ok", "escape", "menu", "shift"] {
             XCTAssertTrue(script.contains("'\(action)'"))
         }
         XCTAssertTrue(script.contains("releaseAll"))
