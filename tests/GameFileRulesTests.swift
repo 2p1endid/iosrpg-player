@@ -4,6 +4,21 @@ import ZIPFoundation
 
 @MainActor
 final class GameFileRulesTests: XCTestCase {
+    func testAppLanguageTranslatesGlobalInterfaceStrings() {
+        XCTAssertEqual(AppLanguage.chinese.text(.myGames), "我的游戏")
+        XCTAssertEqual(AppLanguage.english.text(.myGames), "My Games")
+        XCTAssertEqual(AppLanguage.chinese.text(.importFailed), "导入失败")
+        XCTAssertEqual(AppLanguage.english.text(.importFailed), "Import Failed")
+        XCTAssertEqual(AppLanguage.chinese.text(.runtimeDiagnostics), "运行诊断")
+        XCTAssertEqual(AppLanguage.english.text(.runtimeDiagnostics), "Runtime Diagnostics")
+    }
+
+    func testBetaBuildDisplayUsesParenthesizedCounter() {
+        XCTAssertEqual(AppVersionDisplay.build("14.1"), "14(1)")
+        XCTAssertEqual(AppVersionDisplay.build("14"), "14")
+        XCTAssertEqual(AppVersionDisplay.build("14.2.3"), "14(2.3)")
+    }
+
     func testRuntimeDiagnosticFormatsCompleteJavaScriptReport() {
         let diagnostic = GameRuntimeDiagnostic(
             id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!,

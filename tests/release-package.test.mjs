@@ -4,21 +4,33 @@ import { readFileSync, existsSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('release metadata uses public version 0.1.0 without changing build 14', () => {
+test('beta metadata appends beta counters to main version and build', () => {
   const project = read('project.yml');
-  assert.match(project, /MARKETING_VERSION: "0\.1\.0"/);
-  assert.match(project, /CURRENT_PROJECT_VERSION: "14"/);
+  assert.match(project, /MARKETING_VERSION: "0\.1\.0\.1"/);
+  assert.match(project, /CURRENT_PROJECT_VERSION: "14\.1"/);
 });
 
-test('about screen is bilingual and exposes version author repository and license', () => {
+test('about screen uses the app icon and omits build metadata', () => {
   const about = read('App/AboutView.swift');
-  for (const text of ['关于软件', 'About', '版本', 'Version', '作者', 'Author', 'GitHub', 'MIT License']) {
-    assert.ok(about.includes(text), `missing ${text}`);
-  }
+  for (const text of ['版本', 'Version', '作者', 'Author', 'GitHub', 'MIT License']) assert.ok(about.includes(text));
   assert.ok(about.includes('2p1endid'));
   assert.ok(about.includes('https://github.com/2p1endid/rrppgo'));
   assert.ok(about.includes('CFBundleShortVersionString'));
-  assert.ok(about.includes('CFBundleVersion'));
+  assert.ok(about.includes('AppIcon'));
+  assert.ok(!about.includes('CFBundleVersion'));
+  assert.ok(!about.includes('（构建'));
+  assert.ok(!about.includes('(Build'));
+});
+
+test('application exposes a persistent global Chinese and English language switch', () => {
+  const language = read('shared/AppLanguage.swift');
+  const content = read('App/ContentView.swift');
+  const app = read('App/RRPPGoApp.swift');
+  assert.ok(language.includes('case chinese'));
+  assert.ok(language.includes('case english'));
+  assert.ok(language.includes('AppStorage'));
+  assert.ok(content.includes('LanguageSettingsView'));
+  assert.ok(app.includes('locale'));
 });
 
 test('README is Chinese first English second and documents third-party open source projects', () => {
