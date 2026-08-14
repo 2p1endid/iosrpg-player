@@ -9,6 +9,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var locale: Locale { Locale(identifier: rawValue) }
     var nativeName: String { self == .chinese ? "中文" : "English" }
+    var colon: String { self == .chinese ? "：" : ":" }
     static var current: AppLanguage {
         AppLanguage(rawValue: UserDefaults.standard.string(forKey: storageKey) ?? "") ?? .chinese
     }

@@ -69,7 +69,8 @@ final class PlayerModel: ObservableObject {
                 self.webView?.load(URLRequest(url: baseURL.appendingPathComponent("index.html")))
             } catch {
                 guard self.httpServer === server else { return }
-                self.errorMessage = "\(AppLanguage.current.text(.serverStartFailed)): \(error.localizedDescription)"
+                let language = AppLanguage.current
+                self.errorMessage = "\(language.text(.serverStartFailed))\(language.colon)\(error.localizedDescription)"
                 self.appendDiagnostic(GameRuntimeDiagnostic(
                     id: UUID(), timestamp: Date(), severity: .error, category: .server,
                     gameName: self.gameName, gameID: self.game?.id.uuidString,
@@ -110,10 +111,11 @@ final class PlayerModel: ObservableObject {
         webView?.evaluateJavaScript(script) { [weak self] result, error in
             if let error {
                 Task { @MainActor in
-                    self?.errorMessage = "\(AppLanguage.current.text(.keySendFailed)): \(error.localizedDescription)"
+                    let language = AppLanguage.current
+                    self?.errorMessage = "\(language.text(.keySendFailed))\(language.colon)\(error.localizedDescription)"
                     self?.receiveBridgeMessage([
                         "category": "bridge", "severity": "error",
-                        "message": "\(AppLanguage.current.text(.virtualKeyInjectionFailed)) \(key.rawValue): \(error.localizedDescription)"
+                        "message": "\(language.text(.virtualKeyInjectionFailed)) \(key.rawValue)\(language.colon)\(error.localizedDescription)"
                     ])
                 }
             } else if pressed {
@@ -163,7 +165,8 @@ final class PlayerModel: ObservableObject {
     }
 
     func recordHTTPDiagnostic(statusCode: Int, path: String) {
-        let message = "\(AppLanguage.current.text(.resourceLoadFailed)): HTTP \(statusCode) \(path)"
+        let language = AppLanguage.current
+        let message = "\(language.text(.resourceLoadFailed))\(language.colon)HTTP \(statusCode) \(path)"
         appendDiagnostic(GameRuntimeDiagnostic(
             id: UUID(), timestamp: Date(), severity: .error, category: .http,
             gameName: gameName, gameID: game?.id.uuidString,

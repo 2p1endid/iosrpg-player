@@ -9,7 +9,7 @@ struct GameHTTPNavigationDiagnostic: Equatable {
         let language = AppLanguage.current
         return GameHTTPNavigationDiagnostic(
             status: language.text(.loadFailed),
-            message: "\(language.text(.resourceLoadFailed)): HTTP \(statusCode) \(path)"
+            message: "\(language.text(.resourceLoadFailed))\(language.colon)HTTP \(statusCode) \(path)"
         )
     }
 }
