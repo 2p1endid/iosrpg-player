@@ -11,7 +11,7 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
-RRPPGo-source-spike.zip
+*-source-spike.zip
 ci-artifacts/
 *.ipa
 .hermes/
