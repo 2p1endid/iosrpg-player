@@ -130,9 +130,9 @@ struct GameWebView: UIViewRepresentable {
             Task { @MainActor in
                 guard let model = self.model else { return }
                 if model.game == nil {
-                    model.status = "测试游戏已加载。请使用屏幕按键移动方块。"
+                    model.status = AppLanguage.current.text(.testGameLoaded)
                 } else {
-                    model.status = "\(model.gameName) 已加载。"
+                    model.status = "\(model.gameName) \(AppLanguage.current.text(.gameLoaded))"
                 }
                 model.didFinishLoading()
             }
@@ -173,10 +173,10 @@ struct GameWebView: UIViewRepresentable {
             Task { @MainActor in
                 self.model?.receiveBridgeMessage([
                     "category": "navigation", "severity": "error",
-                    "message": "WebKit 游戏进程意外终止。",
+                    "message": AppLanguage.current.text(.webKitTerminated),
                     "pageURL": webView.url?.absoluteString ?? ""
                 ])
-                self.model?.status = "运行失败"
+                self.model?.status = AppLanguage.current.text(.runtimeFailed)
             }
         }
 
@@ -187,7 +187,7 @@ struct GameWebView: UIViewRepresentable {
                     "message": error.localizedDescription,
                     "pageURL": self.model?.webView?.url?.absoluteString ?? ""
                 ])
-                self.model?.status = "加载失败"
+                self.model?.status = AppLanguage.current.text(.loadFailed)
             }
         }
     }

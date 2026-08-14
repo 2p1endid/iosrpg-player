@@ -72,11 +72,17 @@ extension RPGMakerWebEngine: Codable {}
 
 struct GameImportProgress: Equatable {
     enum Phase: String {
-        case preparing = "准备导入"
-        case extracting = "正在解压"
-        case scanning = "正在识别游戏"
-        case copying = "正在复制游戏"
-        case saving = "正在保存游戏库"
+        case preparing, extracting, scanning, copying, saving
+
+        func title(language: AppLanguage) -> String {
+            switch self {
+            case .preparing: language.text(.preparingImport)
+            case .extracting: language.text(.extracting)
+            case .scanning: language.text(.scanning)
+            case .copying: language.text(.copying)
+            case .saving: language.text(.saving)
+            }
+        }
     }
 
     let phase: Phase
@@ -159,7 +165,7 @@ final class GameLibraryStore: ObservableObject {
         if fileManager.fileExists(atPath: game.containerURL.path) { try fileManager.removeItem(at: game.containerURL) }
         games.removeAll { $0.id == game.id }
         try persist()
-        operationMessage = "已删除 \(game.name)"
+        operationMessage = "\(AppLanguage.current.text(.deleted)) \(game.name)"
     }
 
     func rename(_ game: ImportedGame, to newName: String) throws {
@@ -214,7 +220,7 @@ final class GameLibraryStore: ObservableObject {
         games.sort { $0.importedAt > $1.importedAt }
         try persist()
         importProgress = GameImportProgress(phase: .saving, fraction: 1)
-        operationMessage = "已导入 \(game.name)（\(game.engineLabel)）"
+        operationMessage = "\(AppLanguage.current.text(.imported)) \(game.name) (\(game.engineLabel))"
         return game
     }
 

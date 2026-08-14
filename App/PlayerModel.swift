@@ -6,7 +6,7 @@ import CoreGraphics
 final class PlayerModel: ObservableObject {
     @Published var status: String
     @Published var errorMessage: String?
-    @Published var lastGameMessage = "尚未收到游戏消息"
+    @Published var lastGameMessage = AppLanguage.current.text(.noGameMessage)
     @Published private(set) var diagnostics: [GameRuntimeDiagnostic] = []
     @Published var gameCanvasSize: CGSize = .zero
 
@@ -33,11 +33,11 @@ final class PlayerModel: ObservableObject {
         self.game = game
         if let game {
             gameName = game.name
-            status = "正在准备 \(game.name)…"
+            status = "\(AppLanguage.current.text(.preparingGame)) \(game.name)…"
             gameRoot = try? game.resolvedGameRootURL()
         } else {
-            gameName = "内置测试游戏"
-            status = "正在准备内置 MZ 兼容测试游戏…"
+            gameName = AppLanguage.current.text(.builtinTestGame)
+            status = AppLanguage.current.text(.preparingBuiltinGame)
             gameRoot = Bundle.main.resourceURL?.appendingPathComponent("TestGame", isDirectory: true)
         }
     }
@@ -49,13 +49,13 @@ final class PlayerModel: ObservableObject {
     func loadGame() {
         guard !isLoading else { return }
         guard let gameRoot else {
-            errorMessage = "找不到游戏目录。"
-            status = "无法启动"
+            errorMessage = AppLanguage.current.text(.missingGameDirectory)
+            status = AppLanguage.current.text(.unableToStart)
             return
         }
         isLoading = true
         errorMessage = nil
-        status = "正在启动本地游戏服务器…"
+        status = AppLanguage.current.text(.startingServer)
         let gameID = game?.id.uuidString.lowercased() ?? "builtin"
         let server = LocalGameHTTPServer(gameRoot: gameRoot, gameID: gameID)
         httpServer?.stop()
@@ -65,18 +65,18 @@ final class PlayerModel: ObservableObject {
             do {
                 let baseURL = try await server.start()
                 guard self.httpServer === server else { return }
-                self.status = "正在加载 \(self.gameName)…"
+                self.status = "\(AppLanguage.current.text(.loadingGame)) \(self.gameName)…"
                 self.webView?.load(URLRequest(url: baseURL.appendingPathComponent("index.html")))
             } catch {
                 guard self.httpServer === server else { return }
-                self.errorMessage = "本地游戏服务器启动失败：\(error.localizedDescription)"
+                self.errorMessage = "\(AppLanguage.current.text(.serverStartFailed)): \(error.localizedDescription)"
                 self.appendDiagnostic(GameRuntimeDiagnostic(
                     id: UUID(), timestamp: Date(), severity: .error, category: .server,
                     gameName: self.gameName, gameID: self.game?.id.uuidString,
                     pageURL: nil, message: error.localizedDescription,
                     sourceURL: nil, line: nil, column: nil, stack: nil, details: nil
                 ))
-                self.status = "无法启动"
+                self.status = AppLanguage.current.text(.unableToStart)
                 self.isLoading = false
             }
         }
@@ -92,7 +92,7 @@ final class PlayerModel: ObservableObject {
             return
         }
         errorMessage = nil
-        status = "正在重新加载 \(gameName)…"
+        status = "\(AppLanguage.current.text(.reloadingGame)) \(gameName)…"
         releaseAllKeys()
         webView.load(URLRequest(url: currentURL))
     }
@@ -110,14 +110,14 @@ final class PlayerModel: ObservableObject {
         webView?.evaluateJavaScript(script) { [weak self] result, error in
             if let error {
                 Task { @MainActor in
-                    self?.errorMessage = "发送按键失败：\(error.localizedDescription)"
+                    self?.errorMessage = "\(AppLanguage.current.text(.keySendFailed)): \(error.localizedDescription)"
                     self?.receiveBridgeMessage([
                         "category": "bridge", "severity": "error",
-                        "message": "虚拟按键 \(key.rawValue) 注入失败：\(error.localizedDescription)"
+                        "message": "\(AppLanguage.current.text(.virtualKeyInjectionFailed)) \(key.rawValue): \(error.localizedDescription)"
                     ])
                 }
             } else if pressed {
-                Task { @MainActor in self?.lastGameMessage = "虚拟按键 \(key.rawValue) 已发送（\(String(describing: result))）" }
+                Task { @MainActor in self?.lastGameMessage = "\(AppLanguage.current.text(.virtualKeySent)) \(key.rawValue) (\(String(describing: result)))" }
             }
         }
     }
@@ -163,7 +163,7 @@ final class PlayerModel: ObservableObject {
     }
 
     func recordHTTPDiagnostic(statusCode: Int, path: String) {
-        let message = "资源加载失败：HTTP \(statusCode) \(path)"
+        let message = "\(AppLanguage.current.text(.resourceLoadFailed)): HTTP \(statusCode) \(path)"
         appendDiagnostic(GameRuntimeDiagnostic(
             id: UUID(), timestamp: Date(), severity: .error, category: .http,
             gameName: gameName, gameID: game?.id.uuidString,
@@ -176,7 +176,7 @@ final class PlayerModel: ObservableObject {
     func clearDiagnostics() {
         diagnostics.removeAll()
         errorMessage = nil
-        lastGameMessage = "尚未收到游戏消息"
+        lastGameMessage = AppLanguage.current.text(.noGameMessage)
     }
 
     private func appendDiagnostic(_ diagnostic: GameRuntimeDiagnostic) {

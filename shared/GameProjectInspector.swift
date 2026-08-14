@@ -15,21 +15,18 @@ enum GameImportError: LocalizedError, Equatable {
     case importInProgress
 
     var errorDescription: String? {
+        description(language: AppLanguage.current)
+    }
+
+    func description(language: AppLanguage) -> String {
         switch self {
-        case .unsupportedProject:
-            return "所选文件夹中没有找到受支持的 RPG Maker MV/MZ 游戏。"
-        case .inaccessibleFolder:
-            return "无法读取所选文件夹。"
-        case .copyFailed:
-            return "复制游戏文件失败。"
-        case .invalidArchive:
-            return "ZIP 文件损坏或格式不受支持。"
-        case .unsafeArchive:
-            return "ZIP 包含不安全的路径或符号链接。"
-        case .archiveTooLarge:
-            return "ZIP 内容过大，已停止导入。"
-        case .importInProgress:
-            return "已有游戏正在导入，请稍候。"
+        case .unsupportedProject: language.text(.unsupportedProject)
+        case .inaccessibleFolder: language.text(.inaccessibleFolder)
+        case .copyFailed: language.text(.copyFailed)
+        case .invalidArchive: language.text(.invalidArchive)
+        case .unsafeArchive: language.text(.unsafeArchive)
+        case .archiveTooLarge: language.text(.archiveTooLarge)
+        case .importInProgress: language.text(.importInProgress)
         }
     }
 }

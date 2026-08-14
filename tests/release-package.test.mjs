@@ -12,7 +12,10 @@ test('beta metadata appends beta counters to main version and build', () => {
 
 test('about screen uses the app icon and omits build metadata', () => {
   const about = read('App/AboutView.swift');
-  for (const text of ['版本', 'Version', '作者', 'Author', 'GitHub', 'MIT License']) assert.ok(about.includes(text));
+  const language = read('shared/AppLanguage.swift');
+  for (const text of ['版本', 'Version', '作者', 'Author', 'GitHub', 'MIT License']) {
+    assert.ok(about.includes(text) || language.includes(text), `missing ${text}`);
+  }
   assert.ok(about.includes('2p1endid'));
   assert.ok(about.includes('https://github.com/2p1endid/rrppgo'));
   assert.ok(about.includes('CFBundleShortVersionString'));

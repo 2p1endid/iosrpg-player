@@ -6,6 +6,7 @@ private extension GameImportSource {
 }
 
 struct ContentView: View {
+    @AppLanguageStorage private var language
     @StateObject private var library = GameLibraryStore()
     @State private var importPicker = GameImportPickerState()
     @State private var navigationPath: [ImportedGame] = []
@@ -16,31 +17,36 @@ struct ContentView: View {
             Group {
                 if library.games.isEmpty { emptyState } else { gameList }
             }
-            .navigationTitle("我的游戏")
+            .navigationTitle(language.text(.myGames))
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink { GamePlayerScreen(game: nil) } label: {
-                        Label("测试环境", systemImage: "testtube.2")
+                        Label(language.text(.testEnvironment), systemImage: "testtube.2")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button { importPicker.present(.zip) } label: {
-                            Label("导入 ZIP", systemImage: "doc.zipper")
+                            Label(language.text(.importZIP), systemImage: "doc.zipper")
                         }
                         .disabled(library.importProgress != nil)
                         Button { importPicker.present(.folder) } label: {
-                            Label("导入文件夹", systemImage: "folder.badge.plus")
+                            Label(language.text(.importFolder), systemImage: "folder.badge.plus")
                         }
                         .disabled(library.importProgress != nil)
                         Divider()
                         NavigationLink {
+                            LanguageSettingsView()
+                        } label: {
+                            Label(language.text(.language), systemImage: "globe")
+                        }
+                        NavigationLink {
                             AboutView()
                         } label: {
-                            Label("关于 / About", systemImage: "info.circle")
+                            Label(language.text(.about), systemImage: "info.circle")
                         }
                     } label: {
-                        Label("更多", systemImage: "ellipsis.circle")
+                        Label(language.text(.more), systemImage: "ellipsis.circle")
                     }
                 }
             }
@@ -58,7 +64,7 @@ struct ContentView: View {
         ) { result in
             let source = importPicker.consumeSource()
             guard case let .success(urls) = result, let url = urls.first, let source else {
-                if case let .failure(error) = result { importError = error.localizedDescription }
+                if case let .failure(error) = result { importError = localizedError(error) }
                 return
             }
             Task {
@@ -68,31 +74,31 @@ struct ContentView: View {
                         : try await library.importFolder(url)
                     navigationPath.append(game)
                 } catch {
-                    importError = error.localizedDescription
+                    importError = localizedError(error)
                 }
             }
         }
-        .overlay { if let progress = library.importProgress { ImportProgressOverlay(progress: progress) } }
-        .alert("导入失败", isPresented: Binding(
+        .overlay { if let progress = library.importProgress { ImportProgressOverlay(progress: progress, language: language) } }
+        .alert(language.text(.importFailed), isPresented: Binding(
             get: { importError != nil },
             set: { if !$0 { importError = nil } }
         )) {
-            Button("好", role: .cancel) { importError = nil }
+            Button(language.text(.ok), role: .cancel) { importError = nil }
         } message: {
-            Text(importError ?? "未知错误")
+            Text(importError ?? language.text(.unknownError))
         }
     }
 
     private var emptyState: some View {
         ContentUnavailableView {
-            Label("还没有游戏", systemImage: "gamecontroller")
+            Label(language.text(.noGames), systemImage: "gamecontroller")
         } description: {
-            Text("导入 RPG Maker MV/MZ ZIP，或选择已经解压的项目文件夹。")
+            Text(language.text(.noGamesDescription))
         } actions: {
-            Button("导入 ZIP") { importPicker.present(.zip) }
+            Button(language.text(.importZIP)) { importPicker.present(.zip) }
                 .buttonStyle(.borderedProminent)
-            Button("导入文件夹") { importPicker.present(.folder) }
-            NavigationLink("打开内置测试环境") { GamePlayerScreen(game: nil) }
+            Button(language.text(.importFolder)) { importPicker.present(.folder) }
+            NavigationLink(language.text(.openTestEnvironment)) { GamePlayerScreen(game: nil) }
         }
     }
 
@@ -120,16 +126,23 @@ struct ContentView: View {
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
                         do { try library.delete(game) }
-                        catch { importError = error.localizedDescription }
-                    } label: { Label("删除", systemImage: "trash") }
+                        catch { importError = localizedError(error) }
+                    } label: { Label(language.text(.delete), systemImage: "trash") }
                 }
             }
         }
+    }
+
+    private func localizedError(_ error: Error) -> String {
+        if let importError = error as? GameImportError { return importError.description(language: language) }
+        if let fileError = error as? GameFileError { return fileError.description(language: language) }
+        return error.localizedDescription
     }
 }
 
 private struct ImportProgressOverlay: View {
     let progress: GameImportProgress
+    let language: AppLanguage
 
     var body: some View {
         ZStack {
@@ -139,11 +152,11 @@ private struct ImportProgressOverlay: View {
                     .progressViewStyle(.linear)
                     .tint(.blue)
                 HStack {
-                    Text(progress.phase.rawValue).font(.headline)
+                    Text(progress.phase.title(language: language)).font(.headline)
                     Spacer()
                     Text("\(progress.percentage)%").monospacedDigit().font(.headline)
                 }
-                Text("请保持 App 在前台，导入完成后会自动打开游戏。")
+                Text(language.text(.keepAppForeground))
                     .font(.caption).foregroundStyle(.secondary)
             }
             .padding(24)
@@ -156,6 +169,7 @@ private struct ImportProgressOverlay: View {
 }
 
 struct GamePlayerScreen: View {
+    @AppLanguageStorage private var language
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model: PlayerModel
     @State private var showsDiagnostics = false
@@ -220,7 +234,7 @@ struct GamePlayerScreen: View {
 
     private func toolbarOverlay(proxy: GeometryProxy) -> some View {
         HStack(spacing: 8) {
-            toolbarButton("chevron.left", label: "游戏库") { dismiss() }
+            toolbarButton("chevron.left", label: language.text(.gameLibrary)) { dismiss() }
 
             Button {
                 showsDiagnostics = true
@@ -229,23 +243,23 @@ struct GamePlayerScreen: View {
                     .foregroundStyle(hasRuntimeError ? .red : .white)
                     .frame(width: 36, height: 36)
             }
-            .accessibilityLabel("运行诊断")
+            .accessibilityLabel(language.text(.runtimeDiagnostics))
 
             toolbarButton(
                 showsController ? "gamecontroller.fill" : "gamecontroller",
-                label: showsController ? "隐藏虚拟手柄" : "显示虚拟手柄"
+                label: language.text(showsController ? .hideController : .showController)
             ) {
                 showsController.toggle()
                 if !showsController { model.releaseAllKeys() }
                 showToolbarTemporarily()
             }
 
-            toolbarButton("arrow.clockwise", label: "重新加载") {
+            toolbarButton("arrow.clockwise", label: language.text(.reload)) {
                 model.reloadGame()
                 showToolbarTemporarily()
             }
 
-            toolbarButton("chevron.up", label: "隐藏工具栏") {
+            toolbarButton("chevron.up", label: language.text(.hideToolbar)) {
                 toolbarHideTask?.cancel()
                 withAnimation(.easeOut(duration: 0.2)) { showsToolbar = false }
             }
@@ -266,7 +280,7 @@ struct GamePlayerScreen: View {
                 .frame(width: 44, height: 24)
                 .background(.ultraThinMaterial, in: Capsule())
         }
-        .accessibilityLabel("显示游戏工具栏")
+        .accessibilityLabel(language.text(.showGameToolbar))
         .padding(.top, max(proxy.safeAreaInsets.top, 4))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }

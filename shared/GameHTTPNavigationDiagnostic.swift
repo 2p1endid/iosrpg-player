@@ -6,9 +6,10 @@ struct GameHTTPNavigationDiagnostic: Equatable {
 
     static func evaluate(statusCode: Int, path: String) -> GameHTTPNavigationDiagnostic? {
         guard statusCode >= 400 else { return nil }
+        let language = AppLanguage.current
         return GameHTTPNavigationDiagnostic(
-            status: "加载失败",
-            message: "资源加载失败：HTTP \(statusCode) \(path)"
+            status: language.text(.loadFailed),
+            message: "\(language.text(.resourceLoadFailed)): HTTP \(statusCode) \(path)"
         )
     }
 }

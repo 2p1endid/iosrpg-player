@@ -70,13 +70,13 @@ struct GameRuntimeDiagnostic: Codable, Equatable, Identifiable {
     static func legacyMessage(_ message: String, gameName: String, gameID: String?) -> GameRuntimeDiagnostic {
         let category: GameRuntimeDiagnosticCategory
         let severity: GameRuntimeDiagnosticSeverity
-        if message.hasPrefix("JS错误:") {
+        if message.hasPrefix("JS错误:") || message.hasPrefix("JS Error:") {
             category = .javascript
             severity = .error
-        } else if message.hasPrefix("Promise错误:") {
+        } else if message.hasPrefix("Promise错误:") || message.hasPrefix("Promise Error:") {
             category = .promise
             severity = .error
-        } else if message.hasPrefix("控制台错误:") {
+        } else if message.hasPrefix("控制台错误:") || message.hasPrefix("Console Error:") {
             category = .console
             severity = .error
         } else {
