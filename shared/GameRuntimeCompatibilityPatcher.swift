@@ -16,6 +16,27 @@ enum GameRuntimeCompatibilityPatcher {
         if relativePath.caseInsensitiveCompare("js/plugins/DefaultSvgCursor.js") == .orderedSame {
             source = source.replacingOccurrences(of: "logger.warn({err},", with: "globalThis.logger.warn({err},")
         }
+        if relativePath.caseInsensitiveCompare("js/rpg_managers.js") == .orderedSame {
+            let yarisuteLanguageLoader = """
+            var LngMode = "jp"; //nupu翻訳対応用:: jp / cn / en が入る予定
+            //nupu::翻訳対応::LngMode 読み込み -------
+            var fs = require('fs');
+            LngMode = fs.readFileSync("lng.txt", 'utf-8');
+            //--------------------------------------
+            """
+            if source.contains(yarisuteLanguageLoader) {
+                source = source.replacingOccurrences(
+                    of: yarisuteLanguageLoader,
+                    with: "var LngMode = \"cn\"; // RRPPGo browser compatibility: distribution language"
+                )
+            }
+        }
+        if relativePath.caseInsensitiveCompare("js/plugins/JsScript15Set.js") == .orderedSame {
+            let yarisuteSteamworksImport = "var steamworks = require(\"./js/libs/greenworks\");"
+            if source.contains(yarisuteSteamworksImport) {
+                source = source.replacingOccurrences(of: yarisuteSteamworksImport, with: browserSteamworksFallback)
+            }
+        }
         if relativePath.caseInsensitiveCompare("js/plugins/RemtairyMisc.js") == .orderedSame,
            let start = source.range(of: "DKTools.PreloadManager.checkForDLCs = function() {") {
             let bodyStart = start.upperBound
@@ -71,5 +92,23 @@ enum GameRuntimeCompatibilityPatcher {
 
     private static let browserModManagerScript = #"""
     (function(root) { globalThis.ModManager = { getModsList:function(){return Promise.resolve([]);}, loadMods:function(){return Promise.resolve();}, pathResolver:{} }; })(globalThis);
+    """#
+
+    private static let browserSteamworksFallback = #"""
+    var steamworks = (function() {
+      function callback(args, index, value) { if (typeof args[index] === 'function') args[index](value); }
+      return {
+        initAPI:function(){return false;},
+        saveTextToFile:function(){callback(arguments,2);}, readTextFromFile:function(){callback(arguments,1,'');},
+        isCloudEnabledForUser:function(){return false;}, isCloudEnabled:function(){return false;}, enableCloud:function(){},
+        getCloudQuota:function(cb){if(cb)cb(0,0);},
+        getSteamId:function(){return {screenName:'',staticAccountId:'0'};},
+        activateAchievement:function(){callback(arguments,1);}, getAchievementNames:function(){return [];},
+        getNumberOfAchievements:function(){return 0;}, clearAchievement:function(){callback(arguments,1);},
+        getAchievement:function(){callback(arguments,1,false);}, getCurrentGameLanguage:function(){return 'schinese';},
+        getNumberOfPlayers:function(cb){if(cb)cb(0);}, activateGameOverlay:function(){},
+        isGameOverlayEnabled:function(){return false;}, activateGameOverlayToWebPage:function(){}
+      };
+    })();
     """#
 }
