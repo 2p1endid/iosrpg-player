@@ -4,10 +4,10 @@ import { readFileSync, existsSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('beta metadata appends beta counters to main version and build', () => {
+test('release metadata uses public version 0.1.1 and build 15', () => {
   const project = read('project.yml');
-  assert.match(project, /MARKETING_VERSION: "0\.1\.0\.1"/);
-  assert.match(project, /CURRENT_PROJECT_VERSION: "14\.1"/);
+  assert.match(project, /MARKETING_VERSION: "0\.1\.1"/);
+  assert.match(project, /CURRENT_PROJECT_VERSION: "15"/);
 });
 
 test('about screen uses the app icon and omits build metadata', () => {
