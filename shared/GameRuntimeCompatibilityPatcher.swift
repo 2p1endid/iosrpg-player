@@ -17,16 +17,15 @@ enum GameRuntimeCompatibilityPatcher {
             source = source.replacingOccurrences(of: "logger.warn({err},", with: "globalThis.logger.warn({err},")
         }
         if relativePath.caseInsensitiveCompare("js/rpg_managers.js") == .orderedSame {
-            let yarisuteLanguageLoader = """
-            var LngMode = "jp"; //nupu翻訳対応用:: jp / cn / en が入る予定
-            //nupu::翻訳対応::LngMode 読み込み -------
-            var fs = require('fs');
-            LngMode = fs.readFileSync("lng.txt", 'utf-8');
-            //--------------------------------------
-            """
-            if source.contains(yarisuteLanguageLoader) {
-                source = source.replacingOccurrences(
-                    of: yarisuteLanguageLoader,
+            let yarisuteLanguageStart = "var LngMode = \"jp\"; //nupu翻訳対応用:: jp / cn / en が入る予定"
+            let yarisuteLanguageRead = "LngMode = fs.readFileSync(\"lng.txt\", 'utf-8');"
+            let yarisuteLanguageEnd = "//--------------------------------------"
+            if let start = source.range(of: yarisuteLanguageStart),
+               let read = source.range(of: yarisuteLanguageRead, range: start.lowerBound..<source.endIndex),
+               let end = source.range(of: yarisuteLanguageEnd, range: read.upperBound..<source.endIndex),
+               source[start.lowerBound..<read.lowerBound].contains("var fs = require('fs');") {
+                source.replaceSubrange(
+                    start.lowerBound..<end.upperBound,
                     with: "var LngMode = \"cn\"; // RRPPGo browser compatibility: distribution language"
                 )
             }
