@@ -5,7 +5,7 @@ enum GameRuntimeDiagnosticFormatter {
         diagnostics: [GameRuntimeDiagnostic],
         engineLabel: String?
     ) -> String {
-        var lines = ["iOS RPG Player Runtime Diagnostic"]
+        var lines = ["RRPPGo Runtime Diagnostic"]
         if let diagnostic = diagnostics.last {
             lines.append("Game: \(diagnostic.gameName)")
             if let gameID = diagnostic.gameID { lines.append("Game ID: \(gameID)") }

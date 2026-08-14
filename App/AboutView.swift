@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AboutView: View {
     private let author = "2p1endid"
-    private let repositoryURL = URL(string: "https://github.com/2p1endid/iosrpg-player")!
+    private let repositoryURL = URL(string: "https://github.com/2p1endid/rrppgo")!
 
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
@@ -22,7 +22,7 @@ struct AboutView: View {
                     Label("GitHub 项目主页", systemImage: "link")
                 }
                 infoRow("许可证", value: "MIT License")
-                Text("iOS RPG Player 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地游戏播放器雏形。游戏文件由用户自行导入，项目不包含或分发任何商业游戏资源。")
+                Text("RRPPGo 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地游戏播放器。游戏文件由用户自行导入，项目不包含或分发任何商业游戏资源。")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -34,7 +34,7 @@ struct AboutView: View {
                     Label("GitHub Repository", systemImage: "link")
                 }
                 infoRow("License", value: "MIT License")
-                Text("iOS RPG Player is an open-source prototype local player for RPG Maker MV/MZ games on iPhone and iPad. Game files are imported by the user; this project does not include or distribute commercial game assets.")
+                Text("RRPPGo is an open-source local player for RPG Maker MV/MZ games on iPhone and iPad. Game files are imported by the user; this project does not include or distribute commercial game assets.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -64,11 +64,11 @@ struct AboutView: View {
                 .frame(width: 72, height: 72)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
             VStack(alignment: .leading, spacing: 4) {
-                Text("iOS RPG Player").font(.title3.bold())
-                Text("RPG Maker MV/MZ 本地播放器雏形")
+                Text("RRPPGo").font(.title3.bold())
+                Text("RPG Maker MV/MZ 本地播放器")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("RPG Maker MV/MZ local player prototype")
+                Text("RPG Maker MV/MZ local player")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

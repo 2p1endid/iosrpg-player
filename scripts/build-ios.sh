@@ -18,8 +18,8 @@ xcodegen generate
 case "$MODE" in
   simulator)
     xcodebuild \
-      -project IOSRPGPlayer.xcodeproj \
-      -scheme IOSRPGPlayer \
+      -project RRPPGo.xcodeproj \
+      -scheme RRPPGo \
       -sdk iphonesimulator \
       -destination 'generic/platform=iOS Simulator' \
       -derivedDataPath build/DerivedData \
@@ -27,8 +27,8 @@ case "$MODE" in
       build
 
     xcodebuild \
-      -project IOSRPGPlayer.xcodeproj \
-      -scheme IOSRPGPlayer \
+      -project RRPPGo.xcodeproj \
+      -scheme RRPPGo \
       -sdk iphonesimulator \
       -destination 'platform=iOS Simulator,name=iPhone 16' \
       -derivedDataPath build/DerivedData \
@@ -38,11 +38,11 @@ case "$MODE" in
 
   archive-unsigned)
     xcodebuild \
-      -project IOSRPGPlayer.xcodeproj \
-      -scheme IOSRPGPlayer \
+      -project RRPPGo.xcodeproj \
+      -scheme RRPPGo \
       -configuration Release \
       -destination 'generic/platform=iOS' \
-      -archivePath build/IOSRPGPlayer.xcarchive \
+      -archivePath build/RRPPGo.xcarchive \
       CODE_SIGNING_ALLOWED=NO \
       archive
     ;;
@@ -55,18 +55,18 @@ case "$MODE" in
     fi
 
     xcodebuild \
-      -project IOSRPGPlayer.xcodeproj \
-      -scheme IOSRPGPlayer \
+      -project RRPPGo.xcodeproj \
+      -scheme RRPPGo \
       -configuration Release \
       -destination 'generic/platform=iOS' \
-      -archivePath build/IOSRPGPlayer.xcarchive \
+      -archivePath build/RRPPGo.xcarchive \
       DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
       archive
 
     rm -rf build/ipa
     xcodebuild \
       -exportArchive \
-      -archivePath build/IOSRPGPlayer.xcarchive \
+      -archivePath build/RRPPGo.xcarchive \
       -exportPath build/ipa \
       -exportOptionsPlist ExportOptions.plist
     ;;

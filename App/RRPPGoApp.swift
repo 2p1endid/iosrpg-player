@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct IOSRPGPlayerApp: App {
+struct RRPPGoApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

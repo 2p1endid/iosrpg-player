@@ -1,6 +1,6 @@
 import XCTest
 import ZIPFoundation
-@testable import IOSRPGPlayer
+@testable import RRPPGo
 
 @MainActor
 final class GameFileRulesTests: XCTestCase {

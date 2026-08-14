@@ -16,7 +16,7 @@ test('about screen is bilingual and exposes version author repository and licens
     assert.ok(about.includes(text), `missing ${text}`);
   }
   assert.ok(about.includes('2p1endid'));
-  assert.ok(about.includes('https://github.com/2p1endid/iosrpg-player'));
+  assert.ok(about.includes('https://github.com/2p1endid/rrppgo'));
   assert.ok(about.includes('CFBundleShortVersionString'));
   assert.ok(about.includes('CFBundleVersion'));
 });
@@ -40,7 +40,7 @@ test('repository contains the MIT license', () => {
 
 test('CI packages and uploads only the unsigned IPA', () => {
   const workflow = read('.github/workflows/ios-build.yml');
-  assert.ok(workflow.includes('IOSRPGPlayer-unsigned.ipa'));
+  assert.ok(workflow.includes('RRPPGo-unsigned.ipa'));
   assert.ok(!workflow.toLowerCase().includes('sideloadly'));
   assert.ok(!workflow.includes('codesign --sign -'));
 });

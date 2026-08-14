@@ -2,7 +2,7 @@
   const canvas = document.querySelector("#game");
   const context = canvas.getContext("2d");
   const held = new Set();
-  const stateKey = "ios-rpg-player-spike-position";
+  const stateKey = "rrppgo-test-position";
   const stored = JSON.parse(localStorage.getItem(stateKey) || "null");
   const player = {
     x: stored?.x ?? 390,
@@ -10,7 +10,7 @@
     size: 34,
     speed: 230
   };
-  let confirmationCount = Number(localStorage.getItem("ios-rpg-player-confirmations") || 0);
+  let confirmationCount = Number(localStorage.getItem("rrppgo-confirmations") || 0);
   let lastTime = performance.now();
   let lastSavedAt = 0;
 
@@ -35,7 +35,7 @@
 
     if (down && !event.repeat && event.key === "Enter") {
       confirmationCount += 1;
-      localStorage.setItem("ios-rpg-player-confirmations", String(confirmationCount));
+      localStorage.setItem("rrppgo-confirmations", String(confirmationCount));
       bridge(`A/Enter 已触发 ${confirmationCount} 次`);
     }
     if (down && !event.repeat && event.key === "Escape") {

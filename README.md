@@ -1,10 +1,10 @@
-# iOS RPG Player
+# RRPPGo
 
 [中文](#中文) · [English](#english)
 
 ## 中文
 
-iOS RPG Player 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地游戏播放器。它允许用户从“文件”App导入自己合法持有的、已经部署为Web项目的RPG Maker MV/MZ游戏，并通过应用内的本地服务器和WKWebView运行。
+RRPPGo 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地游戏播放器。它允许用户从“文件”App导入自己合法持有的、已经部署为Web项目的RPG Maker MV/MZ游戏，并通过应用内的本地服务器和WKWebView运行。
 
 > 本项目不包含、提供或分发RPG Maker运行时、商业游戏、DLC、Mod或任何第三方游戏资源。用户应确保自己有权使用所导入的内容。
 
@@ -18,7 +18,7 @@ iOS RPG Player 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地�
 
 ### 安装说明
 
-Release中的`IOSRPGPlayer-unsigned.ipa`是未签名设备构建：
+Release中的`RRPPGo-unsigned.ipa`是未签名设备构建：
 
 - 没有Apple开发者证书；
 - 没有provisioning profile；
@@ -72,7 +72,7 @@ Apple的SwiftUI、UIKit、WebKit、Network、Foundation、CoreGraphics、Uniform
 
 ## English
 
-iOS RPG Player is an open-source local player for RPG Maker MV/MZ on iPhone and iPad. It allows users to import legally owned RPG Maker MV/MZ games that have been deployed as web projects from the Files app and run them through the app's local server and WKWebView.
+RRPPGo is an open-source local player for RPG Maker MV/MZ on iPhone and iPad. It allows users to import legally owned RPG Maker MV/MZ games that have been deployed as web projects from the Files app and run them through the app's local server and WKWebView.
 
 > This project does not include, provide, or distribute RPG Maker runtimes, commercial games, DLC, mods, or any third-party game assets. Users must ensure that they have the right to use the content they import.
 
@@ -86,7 +86,7 @@ The current focus is RPG Maker MV/MZ web deployment projects. Compatibility depe
 
 ### Installation
 
-`IOSRPGPlayer-unsigned.ipa` in the Release is an unsigned device build:
+`RRPPGo-unsigned.ipa` in the Release is an unsigned device build:
 
 - It has no Apple developer certificate;
 - It has no provisioning profile;

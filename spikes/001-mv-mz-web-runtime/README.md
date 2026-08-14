@@ -38,8 +38,8 @@ npm run serve:test-game
 ```bash
 brew install xcodegen
 xcodegen generate
-xcodebuild -project IOSRPGPlayer.xcodeproj \
-  -scheme IOSRPGPlayer \
+xcodebuild -project RRPPGo.xcodeproj \
+  -scheme RRPPGo \
   -sdk iphonesimulator \
   -destination 'platform=iOS Simulator,name=iPhone 16' \
   test

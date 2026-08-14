@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = new URL('../', import.meta.url);
 const rootPath = fileURLToPath(root);
 const read = path => readFileSync(new URL(path, root), 'utf8');
-const excludedDirectories = new Set(['.git', 'ci-artifacts', 'design']);
+const excludedDirectories = new Set(['.git', '.hermes', 'ci-artifacts', 'design']);
 
 function textFiles(directory) {
   const results = [];

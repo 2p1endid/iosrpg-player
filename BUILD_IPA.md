@@ -29,13 +29,13 @@ brew install xcodegen
 输出：
 
 ```text
-build/IOSRPGPlayer.xcarchive
+build/RRPPGo.xcarchive
 ```
 
 GitHub Actions会将归档中的设备App封装为：
 
 ```text
-IOSRPGPlayer-unsigned.ipa
+RRPPGo-unsigned.ipa
 ```
 
 这是一个真正的未签名IPA：没有Apple开发者证书、provisioning profile或可安装签名，不能直接安装到普通iPhone/iPad。它用于设备架构构建验证，或交给用户自己的合法Apple签名流程。
@@ -51,7 +51,7 @@ cp ExportOptions.example.plist ExportOptions.plist
 DEVELOPMENT_TEAM=你的团队ID ./scripts/build-ios.sh ipa
 ```
 
-不要将证书、私钥、密码、API Key或provisioning profile提交到仓库。默认Bundle ID `com.example.iosrpgplayer`只是占位值。
+不要将证书、私钥、密码、API Key或provisioning profile提交到仓库。默认Bundle ID `com.example.rrppgo`只是占位值。
 
 ---
 
@@ -84,13 +84,13 @@ This generates the Xcode project, builds the Simulator app, and runs the iOS uni
 Output:
 
 ```text
-build/IOSRPGPlayer.xcarchive
+build/RRPPGo.xcarchive
 ```
 
 GitHub Actions packages the device app from the archive as:
 
 ```text
-IOSRPGPlayer-unsigned.ipa
+RRPPGo-unsigned.ipa
 ```
 
 This is a genuinely unsigned IPA. It contains no Apple developer certificate, provisioning profile, or installable signature and cannot be installed directly on a normal iPhone or iPad. It is intended as device-build evidence or as input to the user's own legitimate Apple signing process.
@@ -106,4 +106,4 @@ cp ExportOptions.example.plist ExportOptions.plist
 DEVELOPMENT_TEAM=YOUR_TEAM_ID ./scripts/build-ios.sh ipa
 ```
 
-Never commit certificates, private keys, passwords, API keys, or provisioning profiles. The default bundle identifier `com.example.iosrpgplayer` is only a placeholder.
+Never commit certificates, private keys, passwords, API keys, or provisioning profiles. The default bundle identifier `com.example.rrppgo` is only a placeholder.

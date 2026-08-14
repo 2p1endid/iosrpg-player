@@ -1,4 +1,4 @@
-# iOS RPG Player 项目总目标
+# RRPPGo 项目总目标
 
 ## 1. 项目愿景
 
