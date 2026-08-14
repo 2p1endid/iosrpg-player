@@ -306,12 +306,49 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertTrue(patched.contains("loadMods"))
     }
 
-    func testCompatibilityPatcherLeavesOtherScriptsUntouched() {
+    func testCompatibilityPatcherLeavesStandardRPGManagersUntouched() {
         let data = Data("var PluginManager = realManager;".utf8)
         XCTAssertEqual(
             GameRuntimeCompatibilityPatcher.patch(data, relativePath: "js/rpg_managers.js"),
             data
         )
+    }
+
+    func testCompatibilityPatcherLoadsLocalizedYarisuteDataWithoutGlobalNodeRequire() throws {
+        let source = """
+        var LngMode = "jp"; //nupu翻訳対応用:: jp / cn / en が入る予定
+        //nupu::翻訳対応::LngMode 読み込み -------
+        var fs = require('fs');
+        LngMode = fs.readFileSync("lng.txt", 'utf-8');
+        //--------------------------------------
+        function DataManager() {}
+        """
+        let patchedData = GameRuntimeCompatibilityPatcher.patch(
+            Data(source.utf8),
+            relativePath: "js/rpg_managers.js"
+        )
+        let patched = try XCTUnwrap(String(data: patchedData, encoding: .utf8))
+
+        XCTAssertTrue(patched.contains("var LngMode = \"cn\""))
+        XCTAssertFalse(patched.contains("var fs = require('fs')"))
+        XCTAssertTrue(patched.contains("function DataManager() {}"))
+    }
+
+    func testCompatibilityPatcherProvidesBrowserSteamworksFallbackForYarisute() throws {
+        let source = """
+        var steamworks = require("./js/libs/greenworks");
+        var Imported = Imported || {};
+        """
+        let patchedData = GameRuntimeCompatibilityPatcher.patch(
+            Data(source.utf8),
+            relativePath: "js/plugins/JsScript15Set.js"
+        )
+        let patched = try XCTUnwrap(String(data: patchedData, encoding: .utf8))
+
+        XCTAssertFalse(patched.contains("require(\"./js/libs/greenworks\")"))
+        XCTAssertTrue(patched.contains("initAPI:function(){return false;}"))
+        XCTAssertTrue(patched.contains("getSteamId"))
+        XCTAssertTrue(patched.contains("var Imported = Imported || {};"))
     }
 
     func testCompatibilityPatcherDisablesGreenworksInBrowserMode() throws {
