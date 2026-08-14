@@ -315,14 +315,16 @@ final class GameFileRulesTests: XCTestCase {
     }
 
     func testCompatibilityPatcherLoadsLocalizedYarisuteDataWithoutGlobalNodeRequire() throws {
-        let source = """
-        var LngMode = "jp"; //nupu翻訳対応用:: jp / cn / en が入る予定
-        //nupu::翻訳対応::LngMode 読み込み -------
-        var fs = require('fs');
-        LngMode = fs.readFileSync("lng.txt", 'utf-8');
-        //--------------------------------------
-        function DataManager() {}
-        """
+        let lines = [
+            "var LngMode = \"jp\"; //nupu翻訳対応用:: jp / cn / en が入る予定",
+            "//nupu::翻訳対応::LngMode 読み込み -------",
+            "var fs = require('fs');",
+            "LngMode = fs.readFileSync(\"lng.txt\", 'utf-8');",
+            "//--------------------------------------",
+            "function DataManager() {}"
+        ]
+        let crlf = String(UnicodeScalar(13)) + String(UnicodeScalar(10))
+        let source = lines.joined(separator: crlf) + crlf
         let patchedData = GameRuntimeCompatibilityPatcher.patch(
             Data(source.utf8),
             relativePath: "js/rpg_managers.js"
