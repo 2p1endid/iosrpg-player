@@ -8,7 +8,6 @@ RRPPGo 是一个面向 iPhone 和 iPad 的开源 RPG Maker MV/MZ 本地游戏播
 
 > 本项目不包含、提供或分发RPG Maker运行时、商业游戏、DLC、Mod或任何第三方游戏资源。用户应确保自己有权使用所导入的内容。
 
-- 当前版本：`0.1.1`
 - 最低系统：iOS/iPadOS 17.0
 - 许可证：[MIT License](LICENSE)
 
@@ -76,7 +75,6 @@ RRPPGo is an open-source local player for RPG Maker MV/MZ on iPhone and iPad. It
 
 > This project does not include, provide, or distribute RPG Maker runtimes, commercial games, DLC, mods, or any third-party game assets. Users must ensure that they have the right to use the content they import.
 
-- Current version: `0.1.1`
 - Minimum OS: iOS/iPadOS 17.0
 - License: [MIT License](LICENSE)
 
