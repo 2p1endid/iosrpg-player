@@ -56,6 +56,50 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(try store.load(gameID: "game-two"), .defaultProfile)
     }
 
+    func testSaveVaultStoresAndRestoresPerGameSnapshots() throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let vault = GameSaveVault(baseURL: folder)
+        let snapshot = GameSaveSnapshot(
+            localStorage: ["RPG File1": "payload", "RPG Global": "global"],
+            capturedAt: Date(timeIntervalSince1970: 123)
+        )
+
+        try vault.saveCurrent(snapshot, gameID: "game-one")
+
+        XCTAssertEqual(try vault.loadCurrent(gameID: "game-one"), snapshot)
+        XCTAssertNil(try vault.loadCurrent(gameID: "game-two"))
+    }
+
+    func testSaveVaultCreatesListsRestoresAndDeletesBackup() throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let vault = GameSaveVault(baseURL: folder)
+        let first = GameSaveSnapshot(localStorage: ["slot": "one"], capturedAt: Date(timeIntervalSince1970: 1))
+        let second = GameSaveSnapshot(localStorage: ["slot": "two"], capturedAt: Date(timeIntervalSince1970: 2))
+        try vault.saveCurrent(first, gameID: "game")
+
+        let backup = try vault.createBackup(gameID: "game", name: "Before boss")
+        try vault.saveCurrent(second, gameID: "game")
+        try vault.restoreBackup(backup.id, gameID: "game")
+
+        XCTAssertEqual(try vault.loadCurrent(gameID: "game"), first)
+        XCTAssertEqual(try vault.listBackups(gameID: "game").map(\.name), ["Before boss"])
+        try vault.deleteBackup(backup.id, gameID: "game")
+        XCTAssertTrue(try vault.listBackups(gameID: "game").isEmpty)
+    }
+
+    func testSaveBridgeScriptRestoresBeforeGameScriptsAndCapturesMutations() {
+        let script = GameSaveBridgeScript.source(snapshot: ["RPG File1": "payload"])
+
+        XCTAssertTrue(script.contains("localStorage.setItem"))
+        XCTAssertTrue(script.contains("__rrppgoOriginalSetItem"))
+        XCTAssertTrue(script.contains("saveBridge"))
+        XCTAssertTrue(script.contains("RPG File1"))
+    }
+
     func testAppLanguageTranslatesGlobalInterfaceStrings() {
         XCTAssertEqual(AppLanguage.chinese.text(.myGames), "我的游戏")
         XCTAssertEqual(AppLanguage.english.text(.myGames), "My Games")
