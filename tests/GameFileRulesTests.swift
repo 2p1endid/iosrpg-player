@@ -8,7 +8,10 @@ final class GameFileRulesTests: XCTestCase {
         let profile = VirtualControllerProfile.defaultProfile
 
         XCTAssertEqual(profile.buttons.count, 8)
-        XCTAssertEqual(Set(profile.buttons.map(\.mapping)), Set(VirtualInputMapping.Kind.allCases))
+        XCTAssertEqual(
+            Set(profile.buttons.map(\.mapping)),
+            Set([.up, .down, .left, .right, .confirm, .cancel, .x, .y])
+        )
         XCTAssertTrue(profile.buttons.allSatisfy { $0.size >= 36 && $0.size <= 120 })
     }
 
@@ -40,7 +43,9 @@ final class GameFileRulesTests: XCTestCase {
     }
 
     func testVirtualControllerProfileStorePersistsPerGameConfiguration() throws {
-        let folder = try makeTemporaryDirectory()
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
         let store = VirtualControllerProfileStore(baseURL: folder)
         var profile = VirtualControllerProfile.defaultProfile
         profile.buttons[0].colorHex = "#123456"
