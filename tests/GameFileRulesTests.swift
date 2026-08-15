@@ -4,6 +4,53 @@ import ZIPFoundation
 
 @MainActor
 final class GameFileRulesTests: XCTestCase {
+    func testDefaultVirtualControllerProfileRetainsEightBuiltInButtons() {
+        let profile = VirtualControllerProfile.defaultProfile
+
+        XCTAssertEqual(profile.buttons.count, 8)
+        XCTAssertEqual(Set(profile.buttons.map(\.mapping)), Set(VirtualInputMapping.Kind.allCases))
+        XCTAssertTrue(profile.buttons.allSatisfy { $0.size >= 36 && $0.size <= 120 })
+    }
+
+    func testVirtualControllerProfileClampsButtonsInsideNormalizedCanvas() {
+        var button = VirtualControllerButton(
+            label: "A",
+            mapping: .confirm,
+            x: 2,
+            y: -1,
+            size: 500,
+            colorHex: "#123456"
+        )
+
+        button.normalize()
+
+        XCTAssertEqual(button.x, 1)
+        XCTAssertEqual(button.y, 0)
+        XCTAssertEqual(button.size, 120)
+    }
+
+    func testVirtualControllerProfileCanAddCustomMappedButton() {
+        var profile = VirtualControllerProfile.defaultProfile
+
+        let button = profile.addButton(mapping: .pageup)
+
+        XCTAssertEqual(profile.buttons.count, 9)
+        XCTAssertEqual(button.mapping, .pageup)
+        XCTAssertEqual(button.label, "L")
+    }
+
+    func testVirtualControllerProfileStorePersistsPerGameConfiguration() throws {
+        let folder = try makeTemporaryDirectory()
+        let store = VirtualControllerProfileStore(baseURL: folder)
+        var profile = VirtualControllerProfile.defaultProfile
+        profile.buttons[0].colorHex = "#123456"
+
+        try store.save(profile, gameID: "game-one")
+
+        XCTAssertEqual(try store.load(gameID: "game-one"), profile)
+        XCTAssertEqual(try store.load(gameID: "game-two"), .defaultProfile)
+    }
+
     func testAppLanguageTranslatesGlobalInterfaceStrings() {
         XCTAssertEqual(AppLanguage.chinese.text(.myGames), "我的游戏")
         XCTAssertEqual(AppLanguage.english.text(.myGames), "My Games")
