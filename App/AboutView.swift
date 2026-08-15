@@ -6,7 +6,7 @@ struct AboutView: View {
     private let repositoryURL = URL(string: "https://github.com/2p1endid/rrppgo")!
 
     private var version: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.1"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.1.1"
     }
 
     var body: some View {

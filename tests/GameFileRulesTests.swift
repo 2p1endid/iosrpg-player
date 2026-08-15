@@ -13,11 +13,6 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(AppLanguage.english.text(.runtimeDiagnostics), "Runtime Diagnostics")
     }
 
-    func testBetaBuildDisplayUsesParenthesizedCounter() {
-        XCTAssertEqual(AppVersionDisplay.build("14.1"), "14(1)")
-        XCTAssertEqual(AppVersionDisplay.build("14"), "14")
-        XCTAssertEqual(AppVersionDisplay.build("14.2.3"), "14(2.3)")
-    }
 
     func testRuntimeDiagnosticFormatsCompleteJavaScriptReport() {
         let diagnostic = GameRuntimeDiagnostic(

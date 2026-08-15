@@ -234,11 +234,3 @@ struct AppLanguageStorage: DynamicProperty {
         Binding(get: { wrappedValue }, set: { wrappedValue = $0 })
     }
 }
-
-enum AppVersionDisplay {
-    static func build(_ rawValue: String) -> String {
-        let parts = rawValue.split(separator: ".", omittingEmptySubsequences: false)
-        guard parts.count > 1 else { return rawValue }
-        return "\(parts[0])(\(parts.dropFirst().joined(separator: ".")))"
-    }
-}
