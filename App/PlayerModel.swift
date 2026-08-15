@@ -9,6 +9,7 @@ final class PlayerModel: ObservableObject {
     @Published var lastGameMessage = AppLanguage.current.text(.noGameMessage)
     @Published private(set) var diagnostics: [GameRuntimeDiagnostic] = []
     @Published var gameCanvasSize: CGSize = .zero
+    @Published private(set) var saveGeneration = 0
 
     let game: ImportedGame?
     let gameName: String
@@ -61,7 +62,9 @@ final class PlayerModel: ObservableObject {
 
     func restoreSaveBackup(_ id: UUID) throws {
         try saveVault.restoreBackup(id, gameID: saveGameID)
-        reloadGame()
+        releaseAllKeys()
+        isLoading = false
+        saveGeneration += 1
     }
 
     func deleteSaveBackup(_ id: UUID) throws {

@@ -6,7 +6,7 @@ enum GameSaveBridgeScript {
         let json = String(data: data, encoding: .utf8) ?? "{}"
         return #"""
         (function() {
-          var restored = \\#(json);
+          var restored = \#(json);
           Object.keys(restored).forEach(function(key) {
             try { localStorage.setItem(key, restored[key]); } catch (_) {}
           });
@@ -41,6 +41,11 @@ enum GameSaveBridgeScript {
             return result;
           };
           window.__rrppgoCaptureSave = snapshot;
+          window.addEventListener('pagehide', snapshot);
+          window.addEventListener('beforeunload', snapshot);
+          document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') snapshot();
+          });
         })();
         """#
     }

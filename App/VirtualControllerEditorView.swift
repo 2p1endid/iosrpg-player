@@ -1,8 +1,10 @@
 import SwiftUI
 
 struct VirtualControllerEditorView: View {
+    @AppLanguageStorage private var language
     @Binding var profile: VirtualControllerProfile
     let onSave: () -> Void
+    let onCancel: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var selectedID: UUID?
 
@@ -23,22 +25,24 @@ struct VirtualControllerEditorView: View {
 
                 if let index = selectedIndex {
                     Form {
-                        Section("Button") {
-                            TextField("Label", text: $profile.buttons[index].label)
+                        Section(language.text(.controllerButton)) {
+                            TextField(language.text(.buttonLabel), text: $profile.buttons[index].label)
                                 .onChange(of: profile.buttons[index].label) { _, value in
                                     profile.buttons[index].label = String(value.prefix(4))
                                 }
-                            Picker("Mapping", selection: $profile.buttons[index].mapping) {
-                                ForEach(VirtualInputMapping.Kind.allCases, id: \.self) { mapping in
-                                    Text(mapping.rawValue).tag(mapping)
+                            if !profile.buttons[index].isBuiltIn {
+                                Picker(language.text(.buttonMapping), selection: $profile.buttons[index].mapping) {
+                                    ForEach(VirtualInputMapping.Kind.allCases, id: \.self) { mapping in
+                                        Text(mapping.rawValue).tag(mapping)
+                                    }
                                 }
                             }
                             Slider(value: $profile.buttons[index].size, in: 36...120, step: 1) {
-                                Text("Size")
+                                Text(language.text(.buttonSize))
                             }
-                            ColorPicker("Color", selection: colorBinding(index: index), supportsOpacity: false)
+                            ColorPicker(language.text(.buttonColor), selection: colorBinding(index: index), supportsOpacity: false)
                             if !profile.buttons[index].isBuiltIn {
-                                Button("Delete Custom Button", role: .destructive) {
+                                Button(language.text(.deleteCustomButton), role: .destructive) {
                                     profile.buttons.remove(at: index)
                                     selectedID = nil
                                 }
@@ -48,10 +52,16 @@ struct VirtualControllerEditorView: View {
                     .frame(height: 250)
                 }
             }
-            .navigationTitle("Controller")
+            .navigationTitle(language.text(.controllerSettings))
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(language.text(.cancel)) {
+                        onCancel()
+                        dismiss()
+                    }
+                }
                 ToolbarItem(placement: .topBarLeading) {
-                    Menu("Add") {
+                    Menu(language.text(.addButton)) {
                         ForEach(VirtualInputMapping.Kind.allCases, id: \.self) { mapping in
                             Button(mapping.rawValue) {
                                 let added = profile.addButton(mapping: mapping)
@@ -59,15 +69,16 @@ struct VirtualControllerEditorView: View {
                             }
                         }
                     }
+                    .disabled(profile.buttons.count >= 24)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Reset") {
+                    Button(language.text(.resetDefaults)) {
                         profile = .defaultProfile
                         selectedID = nil
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button(language.text(.done)) {
                         onSave()
                         dismiss()
                     }
@@ -88,13 +99,19 @@ struct VirtualControllerEditorView: View {
             .frame(width: value.size, height: value.size)
             .background(Color(hex: value.colorHex).opacity(0.75), in: Circle())
             .overlay(Circle().stroke(selectedID == value.id ? .white : .white.opacity(0.3), lineWidth: selectedID == value.id ? 3 : 1))
-            .position(x: value.x * size.width, y: value.y * size.height)
+            .position(
+                x: min(max(value.x * size.width, value.size / 2), max(value.size / 2, size.width - value.size / 2)),
+                y: min(max(value.y * size.height, value.size / 2), max(value.size / 2, size.height - value.size / 2))
+            )
             .gesture(
                 DragGesture()
                     .onChanged { gesture in
                         selectedID = value.id
-                        button.wrappedValue.x = min(max(gesture.location.x / max(size.width, 1), 0), 1)
-                        button.wrappedValue.y = min(max(gesture.location.y / max(size.height, 1), 0), 1)
+                        let radius = button.wrappedValue.size / 2
+                        let x = min(max(gesture.location.x, radius), max(radius, size.width - radius))
+                        let y = min(max(gesture.location.y, radius), max(radius, size.height - radius))
+                        button.wrappedValue.x = x / max(size.width, 1)
+                        button.wrappedValue.y = y / max(size.height, 1)
                     }
             )
             .onTapGesture { selectedID = value.id }

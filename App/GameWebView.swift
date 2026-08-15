@@ -131,6 +131,7 @@ struct GameWebView: UIViewRepresentable {
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             Task { @MainActor in
                 if message.name == "saveBridge",
+                   message.frameInfo.isMainFrame,
                    let body = message.body as? [String: Any],
                    body["type"] as? String == "snapshot",
                    let values = body["values"] as? [String: String] {

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SaveManagementView: View {
+    @AppLanguageStorage private var language
     @ObservedObject var model: PlayerModel
     @Environment(\.dismiss) private var dismiss
     @State private var backups: [GameSaveBackup] = []
@@ -10,22 +11,22 @@ struct SaveManagementView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Current Save") {
+                Section(language.text(.currentSave)) {
                     if let snapshot = model.currentSaveSnapshot() {
-                        LabeledContent("Captured", value: snapshot.capturedAt.formatted())
-                        LabeledContent("Entries", value: "\(snapshot.localStorage.count)")
-                        Button("Capture Now") { model.captureSaveNow() }
-                        TextField("Backup name", text: $name)
-                        Button("Create Backup") { createBackup() }
+                        LabeledContent(language.text(.capturedAt), value: snapshot.capturedAt.formatted())
+                        LabeledContent(language.text(.saveEntries), value: "\(snapshot.localStorage.count)")
+                        Button(language.text(.captureNow)) { model.captureSaveNow() }
+                        TextField(language.text(.backupName), text: $name)
+                        Button(language.text(.createBackup)) { createBackup() }
                     } else {
-                        Text("No native save snapshot is available yet.")
-                        Button("Capture Now") { model.captureSaveNow() }
+                        Text(language.text(.noSaveSnapshot))
+                        Button(language.text(.captureNow)) { model.captureSaveNow() }
                     }
                 }
 
-                Section("Backups") {
+                Section(language.text(.backups)) {
                     if backups.isEmpty {
-                        Text("No backups")
+                        Text(language.text(.noBackups))
                     } else {
                         ForEach(backups) { backup in
                             VStack(alignment: .leading, spacing: 4) {
@@ -33,25 +34,25 @@ struct SaveManagementView: View {
                                 Text(backup.createdAt.formatted()).font(.caption).foregroundStyle(.secondary)
                             }
                             .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                Button("Restore") { restore(backup) }.tint(.blue)
+                                Button(language.text(.restore)) { restore(backup) }.tint(.blue)
                             }
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button("Delete", role: .destructive) { delete(backup) }
+                                Button(language.text(.delete), role: .destructive) { delete(backup) }
                             }
                         }
                     }
                 }
             }
-            .navigationTitle("Save Management")
+            .navigationTitle(language.text(.saveManagement))
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button(language.text(.done)) { dismiss() } }
             }
             .onAppear { refresh() }
-            .alert("Save Management", isPresented: Binding(
+            .alert(language.text(.saveManagement), isPresented: Binding(
                 get: { errorMessage != nil },
                 set: { if !$0 { errorMessage = nil } }
             )) {
-                Button("OK", role: .cancel) { errorMessage = nil }
+                Button(language.text(.ok), role: .cancel) { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
             }

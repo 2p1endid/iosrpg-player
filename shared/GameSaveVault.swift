@@ -12,14 +12,28 @@ struct GameSaveBackup: Codable, Equatable, Identifiable {
     let snapshot: GameSaveSnapshot
 }
 
+struct GameSaveLimits: Equatable {
+    var maximumSnapshotBytes = 5 * 1024 * 1024
+    var maximumValueBytes = 256 * 1024
+    var maximumKeyCount = 10_000
+    var maximumKeyBytes = 4 * 1024
+    var maximumBackupCount = 20
+}
+
 struct GameSaveVault {
     let baseURL: URL
     private let fileManager: FileManager
+    private let limits: GameSaveLimits
 
-    init(baseURL: URL? = nil, fileManager: FileManager = .default) {
+    init(
+        baseURL: URL? = nil,
+        fileManager: FileManager = .default,
+        limits: GameSaveLimits = GameSaveLimits()
+    ) {
         self.baseURL = baseURL ?? fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("RRPPGo/SaveVaults", isDirectory: true)
         self.fileManager = fileManager
+        self.limits = limits
     }
 
     func loadCurrent(gameID: String) throws -> GameSaveSnapshot? {
@@ -29,6 +43,7 @@ struct GameSaveVault {
     }
 
     func saveCurrent(_ snapshot: GameSaveSnapshot, gameID: String) throws {
+        try validate(snapshot)
         let folder = gameFolder(gameID: gameID)
         try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
         try encoded(snapshot).write(to: folder.appendingPathComponent("current.json"), options: .atomic)
@@ -40,6 +55,7 @@ struct GameSaveVault {
         let folder = backupFolder(gameID: gameID)
         try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
         try encoded(backup).write(to: folder.appendingPathComponent("\(backup.id.uuidString).json"), options: .atomic)
+        try pruneBackups(gameID: gameID)
         return backup
     }
 
@@ -63,6 +79,28 @@ struct GameSaveVault {
         let url = backupFolder(gameID: gameID).appendingPathComponent("\(backupID.uuidString).json")
         guard fileManager.fileExists(atPath: url.path) else { throw GameSaveVaultError.backupNotFound }
         try fileManager.removeItem(at: url)
+    }
+
+    private func validate(_ snapshot: GameSaveSnapshot) throws {
+        guard snapshot.localStorage.count <= limits.maximumKeyCount else { throw GameSaveVaultError.snapshotTooLarge }
+        for (key, value) in snapshot.localStorage {
+            guard key.lengthOfBytes(using: .utf8) <= limits.maximumKeyBytes,
+                  value.lengthOfBytes(using: .utf8) <= limits.maximumValueBytes else {
+                throw GameSaveVaultError.snapshotTooLarge
+            }
+        }
+        guard try encoded(snapshot).count <= limits.maximumSnapshotBytes else {
+            throw GameSaveVaultError.snapshotTooLarge
+        }
+    }
+
+    private func pruneBackups(gameID: String) throws {
+        let backups = try listBackups(gameID: gameID)
+        for backup in backups.dropFirst(max(0, limits.maximumBackupCount)) {
+            try? fileManager.removeItem(
+                at: backupFolder(gameID: gameID).appendingPathComponent("\(backup.id.uuidString).json")
+            )
+        }
     }
 
     private func gameFolder(gameID: String) -> URL {
@@ -95,14 +133,16 @@ struct GameSaveVault {
     }
 }
 
-enum GameSaveVaultError: LocalizedError {
+enum GameSaveVaultError: LocalizedError, Equatable {
     case noCurrentSave
     case backupNotFound
+    case snapshotTooLarge
 
     var errorDescription: String? {
         switch self {
         case .noCurrentSave: "No current save snapshot is available."
         case .backupNotFound: "The selected save backup could not be found."
+        case .snapshotTooLarge: "The save snapshot exceeds the allowed size limits."
         }
     }
 }

@@ -45,6 +45,7 @@ struct VirtualControllerButton: Codable, Equatable, Identifiable {
 }
 
 struct VirtualControllerProfile: Codable, Equatable {
+    var schemaVersion = 1
     var buttons: [VirtualControllerButton]
 
     static let defaultProfile = VirtualControllerProfile(buttons: [
@@ -60,6 +61,7 @@ struct VirtualControllerProfile: Codable, Equatable {
 
     @discardableResult
     mutating func addButton(mapping: VirtualInputMapping.Kind) -> VirtualControllerButton {
+        guard buttons.count < 24 else { return buttons.last ?? Self.defaultProfile.buttons[0] }
         let button = VirtualControllerButton(
             label: Self.defaultLabel(for: mapping),
             mapping: mapping,
@@ -99,7 +101,15 @@ struct VirtualControllerProfileStore {
     func load(gameID: String) throws -> VirtualControllerProfile {
         let url = fileURL(gameID: gameID)
         guard FileManager.default.fileExists(atPath: url.path) else { return .defaultProfile }
-        return try JSONDecoder().decode(VirtualControllerProfile.self, from: Data(contentsOf: url))
+        do {
+            var profile = try JSONDecoder().decode(VirtualControllerProfile.self, from: Data(contentsOf: url))
+            guard profile.schemaVersion == 1 else { return .defaultProfile }
+            profile.buttons = Array(profile.buttons.prefix(24))
+            for index in profile.buttons.indices { profile.buttons[index].normalize() }
+            return profile.buttons.isEmpty ? .defaultProfile : profile
+        } catch {
+            return .defaultProfile
+        }
     }
 
     func save(_ profile: VirtualControllerProfile, gameID: String) throws {

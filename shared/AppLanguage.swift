@@ -37,6 +37,10 @@ enum AppTextKey {
     case noGameMessage, preparingGame, builtinTestGame, preparingBuiltinGame, missingGameDirectory, unableToStart
     case startingServer, loadingGame, serverStartFailed, reloadingGame, keySendFailed, virtualKeyInjectionFailed
     case virtualKeySent, testGameLoaded, gameLoaded, webKitTerminated, runtimeFailed
+    case controllerSettings, controllerButton, buttonLabel, buttonMapping, buttonSize, buttonColor
+    case deleteCustomButton, addButton, resetDefaults
+    case saveManagement, currentSave, capturedAt, saveEntries, captureNow, backupName, createBackup
+    case noSaveSnapshot, backups, noBackups, restore, cancel
 
     var chinese: String {
         switch self {
@@ -126,6 +130,27 @@ enum AppTextKey {
         case .gameLoaded: "已加载。"
         case .webKitTerminated: "WebKit 游戏进程意外终止。"
         case .runtimeFailed: "运行失败"
+        case .controllerSettings: "按键设置"
+        case .controllerButton: "按键"
+        case .buttonLabel: "显示名称"
+        case .buttonMapping: "按键映射"
+        case .buttonSize: "大小"
+        case .buttonColor: "颜色"
+        case .deleteCustomButton: "删除自定义按键"
+        case .addButton: "添加按键"
+        case .resetDefaults: "恢复默认"
+        case .saveManagement: "存档管理"
+        case .currentSave: "当前存档"
+        case .capturedAt: "捕获时间"
+        case .saveEntries: "存档条目"
+        case .captureNow: "立即捕获"
+        case .backupName: "备份名称"
+        case .createBackup: "创建备份"
+        case .noSaveSnapshot: "尚无原生存档快照。"
+        case .backups: "备份"
+        case .noBackups: "暂无备份"
+        case .restore: "恢复"
+        case .cancel: "取消"
         }
     }
 
@@ -217,6 +242,27 @@ enum AppTextKey {
         case .gameLoaded: "loaded."
         case .webKitTerminated: "The WebKit game process terminated unexpectedly."
         case .runtimeFailed: "Runtime Failed"
+        case .controllerSettings: "Controller Settings"
+        case .controllerButton: "Button"
+        case .buttonLabel: "Label"
+        case .buttonMapping: "Mapping"
+        case .buttonSize: "Size"
+        case .buttonColor: "Color"
+        case .deleteCustomButton: "Delete Custom Button"
+        case .addButton: "Add Button"
+        case .resetDefaults: "Reset Defaults"
+        case .saveManagement: "Save Management"
+        case .currentSave: "Current Save"
+        case .capturedAt: "Captured"
+        case .saveEntries: "Entries"
+        case .captureNow: "Capture Now"
+        case .backupName: "Backup Name"
+        case .createBackup: "Create Backup"
+        case .noSaveSnapshot: "No native save snapshot is available yet."
+        case .backups: "Backups"
+        case .noBackups: "No Backups"
+        case .restore: "Restore"
+        case .cancel: "Cancel"
         }
     }
 }

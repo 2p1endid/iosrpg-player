@@ -193,6 +193,7 @@ struct GamePlayerScreen: View {
             GeometryReader { proxy in
                 ZStack {
                     GameWebView(model: model)
+                        .id(model.saveGeneration)
                         .frame(
                             width: GameViewportSizing.webViewSize(container: proxy.size).width,
                             height: GameViewportSizing.webViewSize(container: proxy.size).height
@@ -223,6 +224,7 @@ struct GamePlayerScreen: View {
         .onAppear { scheduleToolbarHide() }
         .onDisappear {
             toolbarHideTask?.cancel()
+            model.captureSaveNow()
             model.stop()
         }
         .onChange(of: hasRuntimeError) { _, hasErrors in
@@ -239,9 +241,12 @@ struct GamePlayerScreen: View {
             GameDiagnosticsView(model: model)
         }
         .sheet(isPresented: $showsControllerEditor) {
-            VirtualControllerEditorView(profile: $controllerProfile) {
-                try? controllerStore.save(controllerProfile, gameID: model.saveGameID)
-            }
+            let originalProfile = (try? controllerStore.load(gameID: model.saveGameID)) ?? .defaultProfile
+            VirtualControllerEditorView(
+                profile: $controllerProfile,
+                onSave: { try? controllerStore.save(controllerProfile, gameID: model.saveGameID) },
+                onCancel: { controllerProfile = originalProfile }
+            )
         }
         .sheet(isPresented: $showsSaveManager) {
             SaveManagementView(model: model)
@@ -270,13 +275,13 @@ struct GamePlayerScreen: View {
                 showToolbarTemporarily()
             }
 
-            toolbarButton("slider.horizontal.3", label: "Controller Settings") {
+            toolbarButton("slider.horizontal.3", label: language.text(.controllerSettings)) {
                 model.releaseAllKeys()
                 showsControllerEditor = true
                 showToolbarTemporarily(keepVisible: true)
             }
 
-            toolbarButton("externaldrive.fill", label: "Save Management") {
+            toolbarButton("externaldrive.fill", label: language.text(.saveManagement)) {
                 model.captureSaveNow()
                 showsSaveManager = true
                 showToolbarTemporarily(keepVisible: true)
@@ -354,8 +359,8 @@ struct GamePlayerScreen: View {
                 ForEach(controllerProfile.buttons) { button in
                     ConfiguredGameButton(button: button, model: model)
                         .position(
-                            x: button.x * proxy.size.width,
-                            y: button.y * proxy.size.height
+                            x: min(max(button.x * proxy.size.width, button.size / 2), max(button.size / 2, proxy.size.width - button.size / 2)),
+                            y: min(max(button.y * proxy.size.height, button.size / 2), max(button.size / 2, proxy.size.height - button.size / 2))
                         )
                 }
             }
