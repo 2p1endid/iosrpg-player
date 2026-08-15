@@ -109,6 +109,45 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(AppLanguage.english.text(.importFailed), "Import Failed")
         XCTAssertEqual(AppLanguage.chinese.text(.runtimeDiagnostics), "运行诊断")
         XCTAssertEqual(AppLanguage.english.text(.runtimeDiagnostics), "Runtime Diagnostics")
+        XCTAssertEqual(AppLanguage.chinese.text(.controllerSettings), "按键设置")
+        XCTAssertEqual(AppLanguage.english.text(.controllerSettings), "Controller Settings")
+        XCTAssertEqual(AppLanguage.chinese.text(.saveManagement), "存档管理")
+        XCTAssertEqual(AppLanguage.english.text(.saveManagement), "Save Management")
+    }
+
+    func testSaveVaultRejectsOversizedSnapshots() throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let vault = GameSaveVault(
+            baseURL: folder,
+            limits: GameSaveLimits(maximumSnapshotBytes: 32, maximumValueBytes: 16)
+        )
+        let snapshot = GameSaveSnapshot(
+            localStorage: ["slot": String(repeating: "x", count: 64)],
+            capturedAt: Date()
+        )
+
+        XCTAssertThrowsError(try vault.saveCurrent(snapshot, gameID: "game")) { error in
+            XCTAssertEqual(error as? GameSaveVaultError, .snapshotTooLarge)
+        }
+    }
+
+    func testSaveVaultPrunesOldBackupsToRetentionLimit() throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let vault = GameSaveVault(baseURL: folder, limits: GameSaveLimits(maximumBackupCount: 2))
+
+        for index in 1...3 {
+            try vault.saveCurrent(
+                GameSaveSnapshot(localStorage: ["slot": "\(index)"], capturedAt: Date()),
+                gameID: "game"
+            )
+            _ = try vault.createBackup(gameID: "game", name: "Backup \(index)")
+        }
+
+        XCTAssertEqual(try vault.listBackups(gameID: "game").count, 2)
     }
 
 
