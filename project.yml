@@ -35,6 +35,8 @@ targets:
       - path: shared/GameControllerLayout.swift
       - path: shared/GameViewportBridgeScript.swift
       - path: shared/AppLanguage.swift
+      - path: shared/GameSaveVault.swift
+      - path: shared/GameSaveBridgeScript.swift
       - path: Resources/TestGame
         type: folder
         buildPhase: resources
