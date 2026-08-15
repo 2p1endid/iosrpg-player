@@ -19,6 +19,7 @@ final class PlayerModel: ObservableObject {
     private var isLoading = false
     private let maximumDiagnosticCount = 100
     private var heldKeys: Set<VirtualGameKey> = []
+    private let saveVault = GameSaveVault()
 
     var latestDiagnostic: GameRuntimeDiagnostic? { diagnostics.last }
     var hasDiagnosticErrors: Bool { diagnostics.contains { $0.severity == .error } }
@@ -27,6 +28,48 @@ final class PlayerModel: ObservableObject {
             diagnostics: diagnostics,
             engineLabel: game?.engineLabel
         )
+    }
+    var saveGameID: String { game?.id.uuidString.lowercased() ?? "builtin" }
+
+    func currentSaveSnapshot() -> GameSaveSnapshot? {
+        try? saveVault.loadCurrent(gameID: saveGameID)
+    }
+
+    func receiveSaveSnapshot(_ values: [String: String]) {
+        do {
+            try saveVault.saveCurrent(
+                GameSaveSnapshot(localStorage: values, capturedAt: Date()),
+                gameID: saveGameID
+            )
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func sendMapping(_ kind: VirtualInputMapping.Kind, pressed: Bool) {
+        let script = VirtualInputScriptBuilder.script(for: .mapping(for: kind), pressed: pressed)
+        webView?.evaluateJavaScript(script)
+    }
+
+    func createSaveBackup(name: String) throws -> GameSaveBackup {
+        try saveVault.createBackup(gameID: saveGameID, name: name)
+    }
+
+    func saveBackups() throws -> [GameSaveBackup] {
+        try saveVault.listBackups(gameID: saveGameID)
+    }
+
+    func restoreSaveBackup(_ id: UUID) throws {
+        try saveVault.restoreBackup(id, gameID: saveGameID)
+        reloadGame()
+    }
+
+    func deleteSaveBackup(_ id: UUID) throws {
+        try saveVault.deleteBackup(id, gameID: saveGameID)
+    }
+
+    func captureSaveNow() {
+        webView?.evaluateJavaScript("window.__rrppgoCaptureSave && window.__rrppgoCaptureSave();")
     }
 
     init(game: ImportedGame? = nil) {

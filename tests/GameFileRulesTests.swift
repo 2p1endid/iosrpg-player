@@ -12,6 +12,7 @@ final class GameFileRulesTests: XCTestCase {
             Set(profile.buttons.map(\.mapping)),
             Set([.up, .down, .left, .right, .confirm, .cancel, .x, .y])
         )
+        XCTAssertTrue(profile.buttons.allSatisfy(\.isBuiltIn))
         XCTAssertTrue(profile.buttons.allSatisfy { $0.size >= 36 && $0.size <= 120 })
     }
 
@@ -40,6 +41,7 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(profile.buttons.count, 9)
         XCTAssertEqual(button.mapping, .pageup)
         XCTAssertEqual(button.label, "L")
+        XCTAssertFalse(button.isBuiltIn)
     }
 
     func testVirtualControllerProfileStorePersistsPerGameConfiguration() throws {

@@ -11,6 +11,12 @@ struct GameWebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let userContentController = WKUserContentController()
         userContentController.add(context.coordinator, name: "gameBridge")
+        userContentController.add(context.coordinator, name: "saveBridge")
+        userContentController.addUserScript(WKUserScript(
+            source: GameSaveBridgeScript.source(snapshot: model.currentSaveSnapshot()?.localStorage ?? [:]),
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        ))
         userContentController.addUserScript(WKUserScript(
             source: GameBrowserCapabilityScript.source,
             injectionTime: .atDocumentStart,
@@ -123,7 +129,16 @@ struct GameWebView: UIViewRepresentable {
         }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-            Task { @MainActor in self.model?.receiveBridgeMessage(message.body) }
+            Task { @MainActor in
+                if message.name == "saveBridge",
+                   let body = message.body as? [String: Any],
+                   body["type"] as? String == "snapshot",
+                   let values = body["values"] as? [String: String] {
+                    self.model?.receiveSaveSnapshot(values)
+                } else {
+                    self.model?.receiveBridgeMessage(message.body)
+                }
+            }
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

@@ -8,6 +8,7 @@ struct VirtualControllerButton: Codable, Equatable, Identifiable {
     var y: Double
     var size: Double
     var colorHex: String
+    var isBuiltIn: Bool
 
     init(
         id: UUID = UUID(),
@@ -16,7 +17,8 @@ struct VirtualControllerButton: Codable, Equatable, Identifiable {
         x: Double,
         y: Double,
         size: Double,
-        colorHex: String
+        colorHex: String,
+        isBuiltIn: Bool = false
     ) {
         self.id = id
         self.label = label
@@ -25,6 +27,7 @@ struct VirtualControllerButton: Codable, Equatable, Identifiable {
         self.y = y
         self.size = size
         self.colorHex = colorHex
+        self.isBuiltIn = isBuiltIn
         normalize()
     }
 
@@ -45,14 +48,14 @@ struct VirtualControllerProfile: Codable, Equatable {
     var buttons: [VirtualControllerButton]
 
     static let defaultProfile = VirtualControllerProfile(buttons: [
-        .init(label: "↑", mapping: .up, x: 0.20, y: 0.70, size: 60, colorHex: "#808080"),
-        .init(label: "↓", mapping: .down, x: 0.20, y: 0.90, size: 60, colorHex: "#808080"),
-        .init(label: "←", mapping: .left, x: 0.10, y: 0.80, size: 60, colorHex: "#808080"),
-        .init(label: "→", mapping: .right, x: 0.30, y: 0.80, size: 60, colorHex: "#808080"),
-        .init(label: "A", mapping: .confirm, x: 0.80, y: 0.86, size: 60, colorHex: "#007AFF"),
-        .init(label: "B", mapping: .cancel, x: 0.90, y: 0.76, size: 60, colorHex: "#FF3B30"),
-        .init(label: "X", mapping: .x, x: 0.70, y: 0.76, size: 60, colorHex: "#34C759"),
-        .init(label: "Y", mapping: .y, x: 0.80, y: 0.66, size: 60, colorHex: "#FFCC00")
+        .init(label: "↑", mapping: .up, x: 0.20, y: 0.70, size: 60, colorHex: "#808080", isBuiltIn: true),
+        .init(label: "↓", mapping: .down, x: 0.20, y: 0.90, size: 60, colorHex: "#808080", isBuiltIn: true),
+        .init(label: "←", mapping: .left, x: 0.10, y: 0.80, size: 60, colorHex: "#808080", isBuiltIn: true),
+        .init(label: "→", mapping: .right, x: 0.30, y: 0.80, size: 60, colorHex: "#808080", isBuiltIn: true),
+        .init(label: "A", mapping: .confirm, x: 0.80, y: 0.86, size: 60, colorHex: "#007AFF", isBuiltIn: true),
+        .init(label: "B", mapping: .cancel, x: 0.90, y: 0.76, size: 60, colorHex: "#FF3B30", isBuiltIn: true),
+        .init(label: "X", mapping: .x, x: 0.70, y: 0.76, size: 60, colorHex: "#34C759", isBuiltIn: true),
+        .init(label: "Y", mapping: .y, x: 0.80, y: 0.66, size: 60, colorHex: "#FFCC00", isBuiltIn: true)
     ])
 
     @discardableResult

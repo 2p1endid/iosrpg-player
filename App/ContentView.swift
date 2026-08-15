@@ -174,10 +174,18 @@ struct GamePlayerScreen: View {
     @StateObject private var model: PlayerModel
     @State private var showsDiagnostics = false
     @State private var showsController = true
+    @State private var showsControllerEditor = false
+    @State private var showsSaveManager = false
+    @State private var controllerProfile: VirtualControllerProfile
+    private let controllerStore = VirtualControllerProfileStore()
     @State private var showsToolbar = true
     @State private var toolbarHideTask: Task<Void, Never>?
 
-    init(game: ImportedGame?) { _model = StateObject(wrappedValue: PlayerModel(game: game)) }
+    init(game: ImportedGame?) {
+        let model = PlayerModel(game: game)
+        _model = StateObject(wrappedValue: model)
+        _controllerProfile = State(initialValue: (try? VirtualControllerProfileStore().load(gameID: model.saveGameID)) ?? .defaultProfile)
+    }
 
     var body: some View {
         ZStack {
@@ -230,6 +238,14 @@ struct GamePlayerScreen: View {
         .sheet(isPresented: $showsDiagnostics) {
             GameDiagnosticsView(model: model)
         }
+        .sheet(isPresented: $showsControllerEditor) {
+            VirtualControllerEditorView(profile: $controllerProfile) {
+                try? controllerStore.save(controllerProfile, gameID: model.saveGameID)
+            }
+        }
+        .sheet(isPresented: $showsSaveManager) {
+            SaveManagementView(model: model)
+        }
     }
 
     private func toolbarOverlay(proxy: GeometryProxy) -> some View {
@@ -252,6 +268,18 @@ struct GamePlayerScreen: View {
                 showsController.toggle()
                 if !showsController { model.releaseAllKeys() }
                 showToolbarTemporarily()
+            }
+
+            toolbarButton("slider.horizontal.3", label: "Controller Settings") {
+                model.releaseAllKeys()
+                showsControllerEditor = true
+                showToolbarTemporarily(keepVisible: true)
+            }
+
+            toolbarButton("externaldrive.fill", label: "Save Management") {
+                model.captureSaveNow()
+                showsSaveManager = true
+                showToolbarTemporarily(keepVisible: true)
             }
 
             toolbarButton("arrow.clockwise", label: language.text(.reload)) {
@@ -322,91 +350,45 @@ struct GamePlayerScreen: View {
 
     private var controllerOverlay: some View {
         GeometryReader { proxy in
-            let leadingInset = max(proxy.safeAreaInsets.leading, 18)
-            let trailingInset = max(proxy.safeAreaInsets.trailing, 18)
-            let minimumGap: CGFloat = 12
-            let buttonSize = GameControllerLayout.buttonDiameter(
-                in: proxy.size,
-                horizontalInsets: leadingInset + trailingInset,
-                minimumGap: minimumGap
-            )
-            HStack(alignment: .bottom) {
-                directionPad(buttonSize: buttonSize)
-                Spacer(minLength: minimumGap)
-                faceButtons(buttonSize: buttonSize)
+            ZStack {
+                ForEach(controllerProfile.buttons) { button in
+                    ConfiguredGameButton(button: button, model: model)
+                        .position(
+                            x: button.x * proxy.size.width,
+                            y: button.y * proxy.size.height
+                        )
+                }
             }
-            .padding(.leading, leadingInset)
-            .padding(.trailing, trailingInset)
-            .padding(.bottom, max(proxy.safeAreaInsets.bottom, 16))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-        }
-    }
-
-    private func faceButtons(buttonSize: CGFloat) -> some View {
-        let edgeSpacing: CGFloat = 3
-        let canvasSize = GameControllerLayout.faceButtonCanvasSize(
-            buttonDiameter: buttonSize,
-            edgeSpacing: edgeSpacing
-        )
-        let layout = GameControllerLayout.faceButtons(
-            in: canvasSize,
-            buttonDiameter: buttonSize,
-            edgeSpacing: edgeSpacing
-        )
-        return ZStack {
-            GameButton(key: .confirm, color: .blue, model: model, size: layout.buttonDiameter)
-                .position(layout.a)
-            GameButton(key: .cancel, color: .red, model: model, size: layout.buttonDiameter)
-                .position(layout.b)
-            GameButton(key: .x, color: .green, model: model, size: layout.buttonDiameter)
-                .position(layout.x)
-            GameButton(key: .y, color: .yellow, model: model, size: layout.buttonDiameter)
-                .position(layout.y)
-        }
-        .frame(width: canvasSize.width, height: canvasSize.height)
-    }
-
-    private func directionPad(buttonSize: CGFloat) -> some View {
-        VStack(spacing: 3) {
-            GameButton(key: .up, color: .gray, model: model, size: buttonSize)
-            HStack(spacing: 3) {
-                GameButton(key: .left, color: .gray, model: model, size: buttonSize)
-                Color.clear.frame(width: buttonSize, height: buttonSize)
-                GameButton(key: .right, color: .gray, model: model, size: buttonSize)
-            }
-            GameButton(key: .down, color: .gray, model: model, size: buttonSize)
         }
     }
 }
 
-private struct GameButton: View {
-    let key: VirtualGameKey
-    let color: Color
+private struct ConfiguredGameButton: View {
+    let button: VirtualControllerButton
     @ObservedObject var model: PlayerModel
-    let size: CGFloat
     @State private var isPressed = false
 
     var body: some View {
-        Text(key.title).font(.title2.bold()).frame(width: size, height: size)
-            .background(color.opacity(isPressed ? 0.95 : 0.45), in: Circle())
+        Text(button.label).font(.title2.bold()).frame(width: button.size, height: button.size)
+            .background(Color(hex: button.colorHex).opacity(isPressed ? 0.95 : 0.5), in: Circle())
             .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
             .contentShape(Circle())
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { _ in
                     guard !isPressed else { return }
                     isPressed = true
-                    model.sendKey(key, pressed: true)
+                    model.sendMapping(button.mapping, pressed: true)
                 }
                 .onEnded { _ in
                     isPressed = false
-                    model.sendKey(key, pressed: false)
+                    model.sendMapping(button.mapping, pressed: false)
                 })
             .onDisappear {
                 if isPressed {
                     isPressed = false
-                    model.sendKey(key, pressed: false)
+                    model.sendMapping(button.mapping, pressed: false)
                 }
             }
-            .accessibilityLabel(key.rawValue)
+            .accessibilityLabel(button.label)
     }
 }
