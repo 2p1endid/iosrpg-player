@@ -25,7 +25,7 @@ struct GameSaveVault {
     func loadCurrent(gameID: String) throws -> GameSaveSnapshot? {
         let url = gameFolder(gameID: gameID).appendingPathComponent("current.json")
         guard fileManager.fileExists(atPath: url.path) else { return nil }
-        return try JSONDecoder().decode(GameSaveSnapshot.self, from: Data(contentsOf: url))
+        return try decoded(GameSaveSnapshot.self, from: Data(contentsOf: url))
     }
 
     func saveCurrent(_ snapshot: GameSaveSnapshot, gameID: String) throws {
@@ -48,7 +48,7 @@ struct GameSaveVault {
         guard fileManager.fileExists(atPath: folder.path) else { return [] }
         return try fileManager.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension.lowercased() == "json" }
-            .compactMap { try? JSONDecoder().decode(GameSaveBackup.self, from: Data(contentsOf: $0)) }
+            .compactMap { try? decoded(GameSaveBackup.self, from: Data(contentsOf: $0)) }
             .sorted { $0.createdAt > $1.createdAt }
     }
 
@@ -81,6 +81,12 @@ struct GameSaveVault {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         return try encoder.encode(value)
+    }
+
+    private func decoded<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(type, from: data)
     }
 
     private func normalizedName(_ value: String) -> String {
