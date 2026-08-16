@@ -53,8 +53,18 @@ struct VirtualControllerProfile: Codable, Equatable {
         buttons: GameControllerLayout.defaultButtons(in: CGSize(width: 375, height: 852))
     )
 
-    static func adaptiveDefault(in size: CGSize) -> VirtualControllerProfile {
-        VirtualControllerProfile(buttons: GameControllerLayout.defaultButtons(in: size))
+    static func adaptiveDefault(
+        in size: CGSize,
+        leadingInset: CGFloat = 18,
+        trailingInset: CGFloat = 18,
+        bottomInset: CGFloat = 16
+    ) -> VirtualControllerProfile {
+        VirtualControllerProfile(buttons: GameControllerLayout.defaultButtons(
+            in: size,
+            leadingInset: leadingInset,
+            trailingInset: trailingInset,
+            bottomInset: bottomInset
+        ))
     }
 
     @discardableResult
