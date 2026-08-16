@@ -1,6 +1,15 @@
 import Foundation
 import CoreGraphics
 
+enum VirtualControllerOrientation: String, Codable, CaseIterable, Hashable {
+    case portrait
+    case landscape
+
+    init(size: CGSize) {
+        self = size.width > size.height ? .landscape : .portrait
+    }
+}
+
 struct VirtualControllerButton: Codable, Equatable, Identifiable {
     let id: UUID
     var label: String
@@ -107,7 +116,43 @@ struct VirtualControllerProfileStore {
     }
 
     func load(gameID: String) throws -> VirtualControllerProfile {
-        let url = fileURL(gameID: gameID)
+        try load(from: legacyFileURL(gameID: gameID))
+    }
+
+    func load(
+        gameID: String,
+        orientation: VirtualControllerOrientation
+    ) throws -> VirtualControllerProfile {
+        try load(from: fileURL(gameID: gameID, orientation: orientation))
+    }
+
+    func save(_ profile: VirtualControllerProfile, gameID: String) throws {
+        try save(profile, to: legacyFileURL(gameID: gameID))
+    }
+
+    func save(
+        _ profile: VirtualControllerProfile,
+        gameID: String,
+        orientation: VirtualControllerOrientation
+    ) throws {
+        try save(profile, to: fileURL(gameID: gameID, orientation: orientation))
+    }
+
+    func hasProfile(gameID: String) -> Bool {
+        FileManager.default.fileExists(atPath: legacyFileURL(gameID: gameID).path)
+    }
+
+    func hasProfile(gameID: String, orientation: VirtualControllerOrientation) -> Bool {
+        FileManager.default.fileExists(atPath: fileURL(gameID: gameID, orientation: orientation).path)
+    }
+
+    private func save(_ profile: VirtualControllerProfile, to url: URL) throws {
+        try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
+        let data = try JSONEncoder().encode(profile)
+        try data.write(to: url, options: .atomic)
+    }
+
+    private func load(from url: URL) throws -> VirtualControllerProfile {
         guard FileManager.default.fileExists(atPath: url.path) else { return .defaultProfile }
         do {
             var profile = try JSONDecoder().decode(VirtualControllerProfile.self, from: Data(contentsOf: url))
@@ -120,18 +165,18 @@ struct VirtualControllerProfileStore {
         }
     }
 
-    func save(_ profile: VirtualControllerProfile, gameID: String) throws {
-        try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
-        let data = try JSONEncoder().encode(profile)
-        try data.write(to: fileURL(gameID: gameID), options: .atomic)
+    private func legacyFileURL(gameID: String) -> URL {
+        baseURL.appendingPathComponent("\(safeID(gameID)).json")
     }
 
-    func hasProfile(gameID: String) -> Bool {
-        FileManager.default.fileExists(atPath: fileURL(gameID: gameID).path)
+    private func fileURL(
+        gameID: String,
+        orientation: VirtualControllerOrientation
+    ) -> URL {
+        baseURL.appendingPathComponent("\(safeID(gameID))-\(orientation.rawValue).json")
     }
 
-    private func fileURL(gameID: String) -> URL {
-        let safeID = gameID.replacingOccurrences(of: "[^A-Za-z0-9._-]", with: "_", options: .regularExpression)
-        return baseURL.appendingPathComponent("\(safeID).json")
+    private func safeID(_ gameID: String) -> String {
+        gameID.replacingOccurrences(of: "[^A-Za-z0-9._-]", with: "_", options: .regularExpression)
     }
 }

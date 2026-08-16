@@ -3,6 +3,7 @@ import SwiftUI
 struct VirtualControllerEditorView: View {
     @AppLanguageStorage private var language
     @Binding var profile: VirtualControllerProfile
+    let controllerOrientation: VirtualControllerOrientation
     let onSave: () -> Void
     let onCancel: () -> Void
     @Environment(\.dismiss) private var dismiss
@@ -89,7 +90,10 @@ struct VirtualControllerEditorView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(language.text(.resetDefaults)) {
-                        profile = .adaptiveDefault(in: editorCanvasSize)
+                        let defaultSize = controllerOrientation == .landscape
+                            ? CGSize(width: max(editorCanvasSize.width, 640), height: min(editorCanvasSize.height, 393))
+                            : CGSize(width: min(editorCanvasSize.width, 430), height: max(editorCanvasSize.height, 700))
+                        profile = .adaptiveDefault(in: defaultSize)
                         selectedID = nil
                     }
                 }

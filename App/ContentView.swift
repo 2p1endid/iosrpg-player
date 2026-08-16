@@ -177,8 +177,8 @@ struct GamePlayerScreen: View {
     @State private var showsControllerEditor = false
     @State private var showsSaveManager = false
     @State private var controllerProfile: VirtualControllerProfile
-    @State private var hasStoredControllerProfile = false
-    @State private var didResolveAdaptiveDefault = false
+    @State private var controllerOrientation: VirtualControllerOrientation = .portrait
+    @State private var resolvedControllerOrientations: Set<VirtualControllerOrientation> = []
     @State private var controllerProfileBeforeEditing: VirtualControllerProfile
     private let controllerStore = VirtualControllerProfileStore()
     @State private var showsToolbar = true
@@ -187,10 +187,12 @@ struct GamePlayerScreen: View {
     init(game: ImportedGame?) {
         let model = PlayerModel(game: game)
         let store = VirtualControllerProfileStore()
-        let storedProfile = try? store.load(gameID: model.saveGameID)
+        let storedProfile = try? store.load(gameID: model.saveGameID, orientation: .portrait)
         _model = StateObject(wrappedValue: model)
         _controllerProfile = State(initialValue: storedProfile ?? .defaultProfile)
-        _hasStoredControllerProfile = State(initialValue: store.hasProfile(gameID: model.saveGameID))
+        if store.hasProfile(gameID: model.saveGameID, orientation: .portrait) {
+            _resolvedControllerOrientations = State(initialValue: [.portrait])
+        }
         _controllerProfileBeforeEditing = State(initialValue: storedProfile ?? .defaultProfile)
     }
 
@@ -250,7 +252,14 @@ struct GamePlayerScreen: View {
         .sheet(isPresented: $showsControllerEditor) {
             VirtualControllerEditorView(
                 profile: $controllerProfile,
-                onSave: { try? controllerStore.save(controllerProfile, gameID: model.saveGameID) },
+                controllerOrientation: controllerOrientation,
+                onSave: {
+                    try? controllerStore.save(
+                        controllerProfile,
+                        gameID: model.saveGameID,
+                        orientation: controllerOrientation
+                    )
+                },
                 onCancel: { controllerProfile = controllerProfileBeforeEditing }
             )
         }
@@ -372,16 +381,35 @@ struct GamePlayerScreen: View {
                 }
             }
             .onAppear {
-                guard !hasStoredControllerProfile, !didResolveAdaptiveDefault else { return }
-                controllerProfile = .adaptiveDefault(
-                    in: proxy.size,
-                    leadingInset: max(proxy.safeAreaInsets.leading, 18),
-                    trailingInset: max(proxy.safeAreaInsets.trailing, 18),
-                    bottomInset: max(proxy.safeAreaInsets.bottom, 16)
-                )
-                didResolveAdaptiveDefault = true
+                handleControllerGeometryChange(proxy)
+            }
+            .onChange(of: proxy.size) { _, _ in
+                handleControllerGeometryChange(proxy)
             }
         }
+    }
+
+    private func handleControllerGeometryChange(_ proxy: GeometryProxy) {
+        guard proxy.size.width > 0, proxy.size.height > 0 else { return }
+        let nextOrientation = VirtualControllerOrientation(size: proxy.size)
+        guard nextOrientation != controllerOrientation || !resolvedControllerOrientations.contains(nextOrientation) else {
+            return
+        }
+
+        model.releaseAllKeys()
+        controllerOrientation = nextOrientation
+        if controllerStore.hasProfile(gameID: model.saveGameID, orientation: nextOrientation),
+           let stored = try? controllerStore.load(gameID: model.saveGameID, orientation: nextOrientation) {
+            controllerProfile = stored
+        } else {
+            controllerProfile = .adaptiveDefault(
+                in: proxy.size,
+                leadingInset: max(proxy.safeAreaInsets.leading, 18),
+                trailingInset: max(proxy.safeAreaInsets.trailing, 18),
+                bottomInset: max(proxy.safeAreaInsets.bottom, 16)
+            )
+        }
+        resolvedControllerOrientations.insert(nextOrientation)
     }
 }
 

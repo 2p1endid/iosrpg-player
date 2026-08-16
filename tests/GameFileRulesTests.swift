@@ -75,6 +75,29 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertEqual(try store.load(gameID: "game-two"), .defaultProfile)
     }
 
+    func testVirtualControllerProfileStoreSeparatesPortraitAndLandscape() throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let store = VirtualControllerProfileStore(baseURL: folder)
+        var portrait = VirtualControllerProfile.defaultProfile
+        portrait.buttons[0].x = 0.1
+        var landscape = VirtualControllerProfile.defaultProfile
+        landscape.buttons[0].x = 0.3
+
+        try store.save(portrait, gameID: "game", orientation: .portrait)
+        try store.save(landscape, gameID: "game", orientation: .landscape)
+
+        XCTAssertEqual(try store.load(gameID: "game", orientation: .portrait), portrait)
+        XCTAssertEqual(try store.load(gameID: "game", orientation: .landscape), landscape)
+    }
+
+    func testControllerOrientationTreatsSquareCanvasAsPortrait() {
+        XCTAssertEqual(VirtualControllerOrientation(size: CGSize(width: 400, height: 800)), .portrait)
+        XCTAssertEqual(VirtualControllerOrientation(size: CGSize(width: 800, height: 400)), .landscape)
+        XCTAssertEqual(VirtualControllerOrientation(size: CGSize(width: 400, height: 400)), .portrait)
+    }
+
     func testSaveVaultStoresAndRestoresPerGameSnapshots() throws {
         let folder = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

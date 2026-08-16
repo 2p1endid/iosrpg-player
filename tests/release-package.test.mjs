@@ -6,8 +6,8 @@ const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8'
 
 test('beta metadata appends counters to main version and build', () => {
   const project = read('project.yml');
-  assert.match(project, /MARKETING_VERSION: "0\.1\.1\.1"/);
-  assert.match(project, /CURRENT_PROJECT_VERSION: "15\.1"/);
+  assert.match(project, /MARKETING_VERSION: "0\.1\.1\.2"/);
+  assert.match(project, /CURRENT_PROJECT_VERSION: "15\.2"/);
 });
 
 test('about screen uses the app icon and omits build metadata', () => {
@@ -66,6 +66,15 @@ test('virtual controller defaults are generated from the legacy adaptive layout'
   assert.match(layout, /static func defaultButtons/);
   assert.match(profile, /GameControllerLayout\.defaultButtons/);
   assert.ok(!profile.includes('x: 0.20, y: 0.70'));
+});
+
+test('controller profiles are stored independently for portrait and landscape', () => {
+  const profile = read('shared/VirtualControllerProfile.swift');
+  const content = read('App/ContentView.swift');
+  assert.match(profile, /enum VirtualControllerOrientation/);
+  assert.match(profile, /orientation: VirtualControllerOrientation/);
+  assert.match(content, /handleControllerGeometryChange/);
+  assert.match(content, /controllerOrientation/);
 });
 
 test('controller editor keeps a stable canvas and uses inline color controls', () => {
