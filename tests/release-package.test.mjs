@@ -59,3 +59,19 @@ test('CI packages and uploads only the unsigned IPA', () => {
   assert.ok(!workflow.toLowerCase().includes('sideloadly'));
   assert.ok(!workflow.includes('codesign --sign -'));
 });
+
+test('virtual controller defaults are generated from the legacy adaptive layout', () => {
+  const layout = read('shared/GameControllerLayout.swift');
+  const profile = read('shared/VirtualControllerProfile.swift');
+  assert.match(layout, /static func defaultButtons/);
+  assert.match(profile, /GameControllerLayout\.defaultButtons/);
+  assert.ok(!profile.includes('x: 0.20, y: 0.70'));
+});
+
+test('controller editor keeps a stable canvas and uses inline color controls', () => {
+  const editor = read('App/VirtualControllerEditorView.swift');
+  assert.match(editor, /editorCanvasHeight/);
+  assert.match(editor, /colorButton\(\.orange|colorButton\(\.blue/);
+  assert.ok(!editor.includes('ColorPicker('));
+  assert.match(editor, /\.frame\(height: editorCanvasHeight\)/);
+});

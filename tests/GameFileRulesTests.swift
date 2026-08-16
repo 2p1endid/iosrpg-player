@@ -16,6 +16,23 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertTrue(profile.buttons.allSatisfy { $0.size >= 36 && $0.size <= 120 })
     }
 
+    func testAdaptiveDefaultUsesLegacyDPadAndFaceButtonGeometry() {
+        let profile = VirtualControllerProfile.adaptiveDefault(in: CGSize(width: 852, height: 393))
+        let up = try! XCTUnwrap(profile.buttons.first { $0.mapping == .up })
+        let down = try! XCTUnwrap(profile.buttons.first { $0.mapping == .down })
+        let left = try! XCTUnwrap(profile.buttons.first { $0.mapping == .left })
+        let right = try! XCTUnwrap(profile.buttons.first { $0.mapping == .right })
+        let a = try! XCTUnwrap(profile.buttons.first { $0.mapping == .confirm })
+        let b = try! XCTUnwrap(profile.buttons.first { $0.mapping == .cancel })
+
+        XCTAssertEqual(up.size, down.size)
+        XCTAssertEqual(left.size, right.size)
+        XCTAssertEqual(up.x, down.x, accuracy: 0.001)
+        XCTAssertEqual(left.y, right.y, accuracy: 0.001)
+        XCTAssertGreaterThan(b.x, a.x)
+        XCTAssertTrue(profile.buttons.allSatisfy { $0.isBuiltIn })
+    }
+
     func testVirtualControllerProfileClampsButtonsInsideNormalizedCanvas() {
         var button = VirtualControllerButton(
             label: "A",

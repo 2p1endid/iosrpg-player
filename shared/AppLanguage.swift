@@ -40,7 +40,7 @@ enum AppTextKey {
     case controllerSettings, controllerButton, buttonLabel, buttonMapping, buttonSize, buttonColor
     case deleteCustomButton, addButton, resetDefaults
     case saveManagement, currentSave, capturedAt, saveEntries, captureNow, backupName, createBackup
-    case noSaveSnapshot, backups, noBackups, restore, cancel
+    case noSaveSnapshot, backups, noBackups, restore, cancel, selectButton
 
     var chinese: String {
         switch self {
@@ -151,6 +151,7 @@ enum AppTextKey {
         case .noBackups: "暂无备份"
         case .restore: "恢复"
         case .cancel: "取消"
+        case .selectButton: "请选择一个按键"
         }
     }
 
@@ -263,6 +264,7 @@ enum AppTextKey {
         case .noBackups: "No Backups"
         case .restore: "Restore"
         case .cancel: "Cancel"
+        case .selectButton: "Select a button"
         }
     }
 }

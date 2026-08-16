@@ -177,14 +177,21 @@ struct GamePlayerScreen: View {
     @State private var showsControllerEditor = false
     @State private var showsSaveManager = false
     @State private var controllerProfile: VirtualControllerProfile
+    @State private var hasStoredControllerProfile = false
+    @State private var didResolveAdaptiveDefault = false
+    @State private var controllerProfileBeforeEditing: VirtualControllerProfile
     private let controllerStore = VirtualControllerProfileStore()
     @State private var showsToolbar = true
     @State private var toolbarHideTask: Task<Void, Never>?
 
     init(game: ImportedGame?) {
         let model = PlayerModel(game: game)
+        let store = VirtualControllerProfileStore()
+        let storedProfile = try? store.load(gameID: model.saveGameID)
         _model = StateObject(wrappedValue: model)
-        _controllerProfile = State(initialValue: (try? VirtualControllerProfileStore().load(gameID: model.saveGameID)) ?? .defaultProfile)
+        _controllerProfile = State(initialValue: storedProfile ?? .defaultProfile)
+        _hasStoredControllerProfile = State(initialValue: store.hasProfile(gameID: model.saveGameID))
+        _controllerProfileBeforeEditing = State(initialValue: storedProfile ?? .defaultProfile)
     }
 
     var body: some View {
@@ -241,11 +248,10 @@ struct GamePlayerScreen: View {
             GameDiagnosticsView(model: model)
         }
         .sheet(isPresented: $showsControllerEditor) {
-            let originalProfile = (try? controllerStore.load(gameID: model.saveGameID)) ?? .defaultProfile
             VirtualControllerEditorView(
                 profile: $controllerProfile,
                 onSave: { try? controllerStore.save(controllerProfile, gameID: model.saveGameID) },
-                onCancel: { controllerProfile = originalProfile }
+                onCancel: { controllerProfile = controllerProfileBeforeEditing }
             )
         }
         .sheet(isPresented: $showsSaveManager) {
@@ -277,6 +283,7 @@ struct GamePlayerScreen: View {
 
             toolbarButton("slider.horizontal.3", label: language.text(.controllerSettings)) {
                 model.releaseAllKeys()
+                controllerProfileBeforeEditing = controllerProfile
                 showsControllerEditor = true
                 showToolbarTemporarily(keepVisible: true)
             }
@@ -363,6 +370,16 @@ struct GamePlayerScreen: View {
                             y: min(max(button.y * proxy.size.height, button.size / 2), max(button.size / 2, proxy.size.height - button.size / 2))
                         )
                 }
+            }
+            .onAppear {
+                guard !hasStoredControllerProfile, !didResolveAdaptiveDefault else { return }
+                controllerProfile = .adaptiveDefault(
+                    in: proxy.size,
+                    leadingInset: max(proxy.safeAreaInsets.leading, 18),
+                    trailingInset: max(proxy.safeAreaInsets.trailing, 18),
+                    bottomInset: max(proxy.safeAreaInsets.bottom, 16)
+                )
+                didResolveAdaptiveDefault = true
             }
         }
     }

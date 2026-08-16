@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 
 struct VirtualControllerButton: Codable, Equatable, Identifiable {
     let id: UUID
@@ -48,16 +49,13 @@ struct VirtualControllerProfile: Codable, Equatable {
     var schemaVersion = 1
     var buttons: [VirtualControllerButton]
 
-    static let defaultProfile = VirtualControllerProfile(buttons: [
-        .init(label: "↑", mapping: .up, x: 0.20, y: 0.70, size: 60, colorHex: "#808080", isBuiltIn: true),
-        .init(label: "↓", mapping: .down, x: 0.20, y: 0.90, size: 60, colorHex: "#808080", isBuiltIn: true),
-        .init(label: "←", mapping: .left, x: 0.10, y: 0.80, size: 60, colorHex: "#808080", isBuiltIn: true),
-        .init(label: "→", mapping: .right, x: 0.30, y: 0.80, size: 60, colorHex: "#808080", isBuiltIn: true),
-        .init(label: "A", mapping: .confirm, x: 0.80, y: 0.86, size: 60, colorHex: "#007AFF", isBuiltIn: true),
-        .init(label: "B", mapping: .cancel, x: 0.90, y: 0.76, size: 60, colorHex: "#FF3B30", isBuiltIn: true),
-        .init(label: "X", mapping: .x, x: 0.70, y: 0.76, size: 60, colorHex: "#34C759", isBuiltIn: true),
-        .init(label: "Y", mapping: .y, x: 0.80, y: 0.66, size: 60, colorHex: "#FFCC00", isBuiltIn: true)
-    ])
+    static let defaultProfile = VirtualControllerProfile(
+        buttons: GameControllerLayout.defaultButtons(in: CGSize(width: 375, height: 852))
+    )
+
+    static func adaptiveDefault(in size: CGSize) -> VirtualControllerProfile {
+        VirtualControllerProfile(buttons: GameControllerLayout.defaultButtons(in: size))
+    }
 
     @discardableResult
     mutating func addButton(mapping: VirtualInputMapping.Kind) -> VirtualControllerButton {
@@ -116,6 +114,10 @@ struct VirtualControllerProfileStore {
         try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
         let data = try JSONEncoder().encode(profile)
         try data.write(to: fileURL(gameID: gameID), options: .atomic)
+    }
+
+    func hasProfile(gameID: String) -> Bool {
+        FileManager.default.fileExists(atPath: fileURL(gameID: gameID).path)
     }
 
     private func fileURL(gameID: String) -> URL {
