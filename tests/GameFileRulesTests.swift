@@ -61,6 +61,26 @@ final class GameFileRulesTests: XCTestCase {
         XCTAssertFalse(button.isBuiltIn)
     }
 
+    func testKeyboardInputDescriptorParsesTypedKeys() {
+        XCTAssertEqual(KeyboardInputDescriptor.parse("q")?.key, "q")
+        XCTAssertEqual(KeyboardInputDescriptor.parse("q")?.code, "KeyQ")
+        XCTAssertEqual(KeyboardInputDescriptor.parse("F1")?.keyCode, 112)
+        XCTAssertEqual(KeyboardInputDescriptor.parse("Enter")?.keyCode, 13)
+        XCTAssertEqual(KeyboardInputDescriptor.parse("Space")?.code, "Space")
+        XCTAssertNil(KeyboardInputDescriptor.parse("alert(1)"))
+    }
+
+    func testCustomControllerButtonStoresTypedKeyboardMapping() {
+        var profile = VirtualControllerProfile.defaultProfile
+        let descriptor = try! XCTUnwrap(KeyboardInputDescriptor.parse("Q"))
+
+        let button = profile.addKeyboardButton(descriptor)
+
+        XCTAssertEqual(button.keyboardInput, descriptor)
+        XCTAssertEqual(button.label, "Q")
+        XCTAssertFalse(button.isBuiltIn)
+    }
+
     func testVirtualControllerProfileStorePersistsPerGameConfiguration() throws {
         let folder = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

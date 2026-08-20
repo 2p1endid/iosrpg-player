@@ -11,6 +11,19 @@ enum VirtualInputScriptBuilder {
         """
     }
 
+    static func script(for keyboard: KeyboardInputDescriptor, pressed: Bool) -> String {
+        let encoder = JSONEncoder()
+        let data = (try? encoder.encode(keyboard)) ?? Data("{}".utf8)
+        let json = String(data: data, encoding: .utf8) ?? "{}"
+        return """
+        (function() {
+          if (window.__iosRPGInputBridge) {
+            window.__iosRPGInputBridge.dispatchKeyboard(\(json), \(pressed ? "true" : "false"));
+          }
+        })();
+        """
+    }
+
     static func releaseAllScript() -> String {
         let actions = VirtualInputMapping.allCases.map { "'\($0.rpgAction)'" }.joined(separator: ",")
         return """

@@ -6,8 +6,8 @@ const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8'
 
 test('beta metadata appends counters to main version and build', () => {
   const project = read('project.yml');
-  assert.match(project, /MARKETING_VERSION: "0\.1\.1\.2"/);
-  assert.match(project, /CURRENT_PROJECT_VERSION: "15\.2"/);
+  assert.match(project, /MARKETING_VERSION: "0\.1\.1\.3"/);
+  assert.match(project, /CURRENT_PROJECT_VERSION: "15\.3"/);
 });
 
 test('about screen uses the app icon and omits build metadata', () => {
@@ -77,10 +77,23 @@ test('controller profiles are stored independently for portrait and landscape', 
   assert.match(content, /controllerOrientation/);
 });
 
-test('controller editor keeps a stable canvas and uses inline color controls', () => {
-  const editor = read('App/VirtualControllerEditorView.swift');
-  assert.match(editor, /editorCanvasHeight/);
-  assert.match(editor, /colorButton\(\.orange|colorButton\(\.blue/);
-  assert.ok(!editor.includes('ColorPicker('));
-  assert.match(editor, /\.frame\(height: editorCanvasHeight\)/);
+test('controller editor uses inline colors without a system color picker', () => {
+  const content = read('App/ContentView.swift');
+  assert.match(content, /inlineControllerColorButton/);
+  assert.ok(!content.includes('ColorPicker('));
+});
+
+test('controller editing happens directly over the live game canvas', () => {
+  const content = read('App/ContentView.swift');
+  assert.match(content, /isEditingController/);
+  assert.match(content, /EditableConfiguredGameButton/);
+  assert.ok(!content.includes('.sheet(isPresented: $showsControllerEditor)'));
+});
+
+test('custom buttons accept typed keyboard mappings through a safe parser', () => {
+  const mapping = read('shared/VirtualInputMapping.swift');
+  const profile = read('shared/VirtualControllerProfile.swift');
+  assert.match(mapping, /KeyboardInputDescriptor/);
+  assert.match(mapping, /parse\(_ input: String\)/);
+  assert.match(profile, /keyboardInput/);
 });

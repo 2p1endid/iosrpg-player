@@ -43,6 +43,19 @@ enum GameVirtualInputBridgeScript {
             held[action] = false;
           });
           sync();
+        },
+        dispatchKeyboard: function(item, pressed) {
+          if (!item || typeof item.key !== 'string' || typeof item.code !== 'string' ||
+              typeof item.keyCode !== 'number') return;
+          var type = pressed ? 'keydown' : 'keyup';
+          var event = new KeyboardEvent(type, {
+            key:item.key, code:item.code, bubbles:true, cancelable:true, repeat:false
+          });
+          try {
+            Object.defineProperty(event, 'keyCode', {get:function(){return item.keyCode;}});
+            Object.defineProperty(event, 'which', {get:function(){return item.keyCode;}});
+          } catch (_) {}
+          document.dispatchEvent(event);
         }
       };
       root.__iosRPGInputBridge = bridge;

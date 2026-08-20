@@ -52,6 +52,16 @@ final class PlayerModel: ObservableObject {
         webView?.evaluateJavaScript(script)
     }
 
+    func sendButton(_ button: VirtualControllerButton, pressed: Bool) {
+        let script: String
+        if let keyboard = button.keyboardInput {
+            script = VirtualInputScriptBuilder.script(for: keyboard, pressed: pressed)
+        } else {
+            script = VirtualInputScriptBuilder.script(for: .mapping(for: button.mapping), pressed: pressed)
+        }
+        webView?.evaluateJavaScript(script)
+    }
+
     func createSaveBackup(name: String) throws -> GameSaveBackup {
         try saveVault.createBackup(gameID: saveGameID, name: name)
     }

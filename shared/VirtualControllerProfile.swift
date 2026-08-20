@@ -14,6 +14,7 @@ struct VirtualControllerButton: Codable, Equatable, Identifiable {
     let id: UUID
     var label: String
     var mapping: VirtualInputMapping.Kind
+    var keyboardInput: KeyboardInputDescriptor?
     var x: Double
     var y: Double
     var size: Double
@@ -24,6 +25,7 @@ struct VirtualControllerButton: Codable, Equatable, Identifiable {
         id: UUID = UUID(),
         label: String,
         mapping: VirtualInputMapping.Kind,
+        keyboardInput: KeyboardInputDescriptor? = nil,
         x: Double,
         y: Double,
         size: Double,
@@ -33,6 +35,7 @@ struct VirtualControllerButton: Codable, Equatable, Identifiable {
         self.id = id
         self.label = label
         self.mapping = mapping
+        self.keyboardInput = keyboardInput
         self.x = x
         self.y = y
         self.size = size
@@ -82,6 +85,22 @@ struct VirtualControllerProfile: Codable, Equatable {
         let button = VirtualControllerButton(
             label: Self.defaultLabel(for: mapping),
             mapping: mapping,
+            x: 0.5,
+            y: 0.5,
+            size: 60,
+            colorHex: "#8E8E93"
+        )
+        buttons.append(button)
+        return button
+    }
+
+    @discardableResult
+    mutating func addKeyboardButton(_ descriptor: KeyboardInputDescriptor) -> VirtualControllerButton {
+        guard buttons.count < 24 else { return buttons.last ?? Self.defaultProfile.buttons[0] }
+        let button = VirtualControllerButton(
+            label: String(descriptor.displayName.prefix(4)),
+            mapping: .confirm,
+            keyboardInput: descriptor,
             x: 0.5,
             y: 0.5,
             size: 60,
