@@ -8,6 +8,7 @@ struct ImportedGame: Codable, Equatable, Hashable, Identifiable {
     let relativeGameRoot: String
 
     var engineLabel: String { engine.rawValue.uppercased() }
+    var saveGameID: String { id.uuidString.lowercased() }
     private var storageRoot: URL?
 
     enum CodingKeys: String, CodingKey { case id, name, engine, importedAt, relativeGameRoot }

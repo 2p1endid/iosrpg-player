@@ -40,7 +40,7 @@ enum AppTextKey {
     case controllerSettings, controllerButton, buttonLabel, buttonMapping, buttonSize, buttonColor
     case deleteCustomButton, addButton, resetDefaults
     case saveManagement, currentSave, capturedAt, saveEntries, captureNow, backupName, createBackup
-    case noSaveSnapshot, backups, noBackups, restore, cancel, selectButton
+    case noSaveSnapshot, backups, noBackups, restore, cancel, selectButton, restoreOnNextLaunch
 
     var chinese: String {
         switch self {
@@ -152,6 +152,7 @@ enum AppTextKey {
         case .restore: "恢复"
         case .cancel: "取消"
         case .selectButton: "请选择一个按键"
+        case .restoreOnNextLaunch: "恢复后的存档会在下次启动该游戏时生效。"
         }
     }
 
@@ -265,6 +266,7 @@ enum AppTextKey {
         case .restore: "Restore"
         case .cancel: "Cancel"
         case .selectButton: "Select a button"
+        case .restoreOnNextLaunch: "The restored save takes effect the next time this game starts."
         }
     }
 }

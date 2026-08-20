@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var importPicker = GameImportPickerState()
     @State private var navigationPath: [ImportedGame] = []
     @State private var importError: String?
+    @State private var saveManagementGame: ImportedGame?
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -71,6 +72,9 @@ struct ContentView: View {
             }
         }
         .overlay { if let progress = library.importProgress { ImportProgressOverlay(progress: progress, language: language) } }
+        .sheet(item: $saveManagementGame) { game in
+            SaveManagementView(game: game)
+        }
         .alert(language.text(.importFailed), isPresented: Binding(
             get: { importError != nil },
             set: { if !$0 { importError = nil } }
@@ -99,19 +103,30 @@ struct ContentView: View {
                 Text(message).font(.caption).foregroundStyle(.secondary)
             }
             ForEach(library.games) { game in
-                NavigationLink(value: game) {
-                    HStack(spacing: 14) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12).fill(.blue.gradient)
-                            Image(systemName: "gamecontroller.fill").foregroundStyle(.white).font(.title2)
-                        }
-                        .frame(width: 52, height: 52)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(game.name).font(.headline).foregroundStyle(.primary)
-                            Text("RPG Maker \(game.engineLabel)").font(.caption).foregroundStyle(.secondary)
-                            Text(game.importedAt, style: .date).font(.caption2).foregroundStyle(.tertiary)
+                HStack(spacing: 8) {
+                    NavigationLink(value: game) {
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12).fill(.blue.gradient)
+                                Image(systemName: "gamecontroller.fill").foregroundStyle(.white).font(.title2)
+                            }
+                            .frame(width: 52, height: 52)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(game.name).font(.headline).foregroundStyle(.primary)
+                                Text("RPG Maker \(game.engineLabel)").font(.caption).foregroundStyle(.secondary)
+                                Text(game.importedAt, style: .date).font(.caption2).foregroundStyle(.tertiary)
+                            }
                         }
                     }
+                    Button {
+                        saveManagementGame = game
+                    } label: {
+                        Image(systemName: "externaldrive.fill")
+                            .font(.title3)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("\(game.name) · \(language.text(.saveManagement))")
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {

@@ -6,8 +6,8 @@ const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8'
 
 test('beta metadata appends counters to main version and build', () => {
   const project = read('project.yml');
-  assert.match(project, /MARKETING_VERSION: "0\.1\.1\.3"/);
-  assert.match(project, /CURRENT_PROJECT_VERSION: "15\.3"/);
+  assert.match(project, /MARKETING_VERSION: "0\.1\.1\.4"/);
+  assert.match(project, /CURRENT_PROJECT_VERSION: "15\.4"/);
 });
 
 test('about screen uses the app icon and omits build metadata', () => {
@@ -96,4 +96,17 @@ test('custom buttons accept typed keyboard mappings through a safe parser', () =
   assert.match(mapping, /KeyboardInputDescriptor/);
   assert.match(mapping, /parse\(_ input: String\)/);
   assert.match(profile, /keyboardInput/);
+});
+
+test('My Games exposes per-game save management without launching the player', () => {
+  const content = read('App/ContentView.swift');
+  const saves = read('App/SaveManagementView.swift');
+  const language = read('shared/AppLanguage.swift');
+  assert.match(content, /saveManagementGame/);
+  assert.match(content, /SaveManagementView\(game:/);
+  assert.match(content, /externaldrive/);
+  assert.match(saves, /init\(game: ImportedGame\)/);
+  assert.match(saves, /allowsCapture/);
+  assert.ok(language.includes('恢复后的存档会在下次启动该游戏时生效。'));
+  assert.ok(language.includes('The restored save takes effect the next time this game starts.'));
 });

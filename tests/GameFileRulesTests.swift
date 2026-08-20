@@ -4,6 +4,19 @@ import ZIPFoundation
 
 @MainActor
 final class GameFileRulesTests: XCTestCase {
+    func testImportedGameUsesStableLowercasedSaveGameID() {
+        let game = ImportedGame(
+            id: UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")!,
+            name: "Game",
+            engine: .mv,
+            importedAt: Date(timeIntervalSince1970: 1),
+            relativeGameRoot: "www",
+            storageRoot: nil
+        )
+
+        XCTAssertEqual(game.saveGameID, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+    }
+
     func testDefaultVirtualControllerProfileRetainsEightBuiltInButtons() {
         let profile = VirtualControllerProfile.defaultProfile
 

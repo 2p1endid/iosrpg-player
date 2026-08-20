@@ -30,7 +30,7 @@ final class PlayerModel: ObservableObject {
             engineLabel: game?.engineLabel
         )
     }
-    var saveGameID: String { game?.id.uuidString.lowercased() ?? "builtin" }
+    var saveGameID: String { game?.saveGameID ?? "builtin" }
 
     func currentSaveSnapshot() -> GameSaveSnapshot? {
         try? saveVault.loadCurrent(gameID: saveGameID)
